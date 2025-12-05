@@ -42,7 +42,7 @@ jobs:
       - name: Install cargo tools for license verification
         run: cargo binstall --no-confirm --locked cargo-about
       - name: Update Cargo.toml version
-        run: cargo edit set version "${{ github.event.inputs.version }}"
+        run: cargo set-version "${{ github.event.inputs.version }}"
       - name: Update third-party licenses
         run: cargo about generate about.hbs > LICENSE-3RD-PARTY.txt
       - name: Generate changelog
