@@ -13,7 +13,7 @@ jobs:
   auto-approve:
     runs-on: ubuntu-latest
     if: |
-      github.repository == 'mongodb/atlas-local-lib' &&
+      github.repository == 'mongodb/atlas-local-cli' &&
       github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
       - name: Checkout PR
@@ -28,19 +28,11 @@ jobs:
           rustup update stable
           rustup default stable
 
-      - name: Cache cargo tools
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/bin
-          key: ${{ runner.os }}-cargo-tools-about-${{ env.CARGO_ABOUT_VERSION }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-tools-
-
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@v1.16.2
+    
       - name: Install cargo-about
-        run: |
-          if ! command -v cargo-about &> /dev/null; then
-            cargo install --locked --version ${{ env.CARGO_ABOUT_VERSION }} cargo-about
-          fi
+        run: cargo binstall --no-confirm --locked --version ${{ env.CARGO_ABOUT_VERSION }} cargo-about
 
       - name: Dependabot metadata
         id: metadata
@@ -67,14 +59,14 @@ jobs:
           fi
 
       - name: Approve Dependabot PR
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' || contains(steps.metadata.outputs.dependency-names, 'security') || steps.metadata.outputs.package-ecosystem == 'github_actions'
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' || contains(steps.metadata.outputs.dependency-names, 'security')
         run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Enable auto-merge for Dependabot PR
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' || contains(steps.metadata.outputs.dependency-names, 'security') || steps.metadata.outputs.package-ecosystem == 'github_actions'
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' || contains(steps.metadata.outputs.dependency-names, 'security')
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
