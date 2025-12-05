@@ -1,0 +1,64 @@
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+run-name: "Prepare release: ${{ inputs.version }}"
+
+permissions:
+  contents: read
+
+jobs:
+  update-version:
+    name: Update Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Set Apix Bot token
+        id: app-token
+        uses: mongodb/apix-action/token@6c3fde402c21942fa46cde003f190c2b23c59530
+        with:
+          app-id: ${{ secrets.APIXBOT_APP_ID }}
+          private-key: ${{ secrets.APIXBOT_APP_PEM }}
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: x86_64-unknown-linux-gnu
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@v1.16.2
+      - name: Install cargo-edit to update Cargo.toml version
+        run: cargo binstall --no-confirm --locked cargo-edit
+      - name: Install cargo tools for license verification
+        run: cargo binstall --no-confirm --locked cargo-about
+      - name: Update Cargo.toml version
+        run: cargo edit set version "${{ github.event.inputs.version }}"
+      - name: Update third-party licenses
+        run: cargo about generate about.hbs > LICENSE-3RD-PARTY.txt
+      - name: Generate changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --tag ${{ github.event.inputs.version }} --verbose
+        env:
+          OUTPUT: CHANGELOG.md
+          GITHUB_REPO: ${{ github.repository }}
+      - name: Commit version changes
+        run: |
+          git config --global user.name "${{ steps.app-token.outputs.user-name }}"
+          git config --global user.email "${{ steps.app-token.outputs.user-email }}"
+          git add Cargo.toml Cargo.lock CHANGELOG.md LICENSE-3RD-PARTY.txt
+          git commit -m "chore(release): prepare for ${{ github.event.inputs.version }}"
+          git tag "v${{ github.event.inputs.version }}"
+          git push
+          git push --tags
