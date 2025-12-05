@@ -443,7 +443,7 @@ OVERVIEW OF LICENSES:
 -----------------------------------------------------------------------------
                         Apache License 2.0
         applies to: 
-        - atlas-local 0.0.1 (https://github.com/mongodb/atlas-local-cli/)
+        - atlas-local 0.0.2 (https://github.com/mongodb/atlas-local-cli/)
         - clap_builder 4.5.15 (https://github.com/clap-rs/clap)
         - clap_derive 4.5.13 (https://github.com/clap-rs/clap)
         - clap_lex 0.7.2 (https://github.com/clap-rs/clap)
