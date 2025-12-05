@@ -1,0 +1,10 @@
+name: atlas-local-plugin
+description: plugin which allows you to manage MongoDB Atlas local instances
+version: $VERSION
+github:
+    owner: $GITHUB_REPOSITORY_OWNER
+    name: $GITHUB_REPOSITORY_NAME
+binary: $BINARY
+commands: 
+    local: 
+        description: Manage MongoDB Atlas local instances
