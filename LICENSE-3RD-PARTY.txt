@@ -444,9 +444,6 @@ OVERVIEW OF LICENSES:
                         Apache License 2.0
         applies to: 
         - atlas-local 0.0.2 (https://github.com/mongodb/atlas-local-cli/)
-        - clap_builder 4.5.15 (https://github.com/clap-rs/clap)
-        - clap_derive 4.5.13 (https://github.com/clap-rs/clap)
-        - clap_lex 0.7.2 (https://github.com/clap-rs/clap)
 -----------------------------------------------------------------------------
 
                                  Apache License
@@ -868,7 +865,10 @@ OVERVIEW OF LICENSES:
         - anstyle-query 1.1.1 (https://github.com/rust-cli/anstyle)
         - anstyle-wincon 3.0.4 (https://github.com/rust-cli/anstyle.git)
         - anstyle 1.0.8 (https://github.com/rust-cli/anstyle.git)
-        - clap 4.5.16 (https://github.com/clap-rs/clap)
+        - clap 4.5.53 (https://github.com/clap-rs/clap)
+        - clap_builder 4.5.53 (https://github.com/clap-rs/clap)
+        - clap_derive 4.5.49 (https://github.com/clap-rs/clap)
+        - clap_lex 0.7.6 (https://github.com/clap-rs/clap)
         - colorchoice 1.0.2 (https://github.com/rust-cli/anstyle)
         - is_terminal_polyfill 1.70.1 (https://github.com/polyfill-rs/is_terminal_polyfill)
 -----------------------------------------------------------------------------
@@ -1507,7 +1507,7 @@ limitations under the License.
 -----------------------------------------------------------------------------
                         Apache License 2.0
         applies to: 
-        - anyhow 1.0.86 (https://github.com/dtolnay/anyhow)
+        - anyhow 1.0.100 (https://github.com/dtolnay/anyhow)
         - libc 0.2.156 (https://github.com/rust-lang/libc)
         - proc-macro2 1.0.86 (https://github.com/dtolnay/proc-macro2)
         - quote 1.0.36 (https://github.com/dtolnay/quote)
