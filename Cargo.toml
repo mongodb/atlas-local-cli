@@ -11,8 +11,8 @@ e2e-tests = []
 generate-manifest = []
 
 [dependencies]
-anyhow = "1.0.86"
-clap = { version = "4.5.16", features = ["derive"] }
+anyhow = "1.0.100"
+clap = { version = "4.5.53", features = ["derive"] }
 dialoguer = "0.12.0"
 
 # The profile that 'dist' will build with
