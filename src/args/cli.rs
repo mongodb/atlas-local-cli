@@ -25,7 +25,7 @@ impl clap::Parser for Cli {}
 
 impl Cli {
     /// Create a new command with the correct binary name based on if we're executing as a plugin or directly.
-    /// 
+    ///
     /// Setting the binary name changes the usage string in the help text.
     /// e.g. if the binary name is "atlas", the usage string will be "Usage: atlas <COMMAND>".
     fn new_command() -> clap::Command {
@@ -42,7 +42,7 @@ impl Cli {
 }
 
 /// Manually implement the CommandFactory trait to change the help text format based on execution mode.
-/// 
+///
 /// The main goal of this implementation is to ensure that the usage string in the help text aligns with the execution mode.
 ///
 /// This implementation allows the CLI to dynamically determine its binary name:
