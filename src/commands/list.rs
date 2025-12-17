@@ -35,7 +35,7 @@ impl TryFrom<args::List> for List {
     fn try_from(_: args::List) -> std::result::Result<Self, Self::Error> {
         Ok(List {
             deployment_lister: Box::new(Client::new(
-                Docker::connect_with_unix_defaults().context("connecting to Docker")?,
+                Docker::connect_with_defaults().context("connecting to Docker")?,
             )),
         })
     }
