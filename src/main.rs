@@ -1,3 +1,12 @@
+//! Main entry point for the Atlas Local CLI application.
+//!
+//! This module handles the application's startup flow:
+//! 1. Parses CLI arguments using clap
+//! 2. Converts CLI arguments into executable commands
+//! 3. Executes the commands and handles their output
+//!
+//! The application can be run either as a standalone CLI (`atlas-local`) or as an Atlas CLI plugin (`atlas local`).
+
 use anyhow::{Context, Result};
 use args::Cli;
 use clap::Parser;

@@ -1,32 +1,60 @@
+//! This module contains the table logic for the application.
+//!
+//! The main entry point is the [`Table`] struct which represents a table.
+//! It also contains the [`IntoTable`] trait which allows any type to be converted into a table.
 use std::fmt::Display;
 
+/// Table representation.
+///
+/// A table is a collection of rows and columns.
+///
+/// The table is printed using the [`Display`] trait.
+/// It's following the same format as the tables printed using the Atlas CLI.
 pub struct Table {
+    /// Header of the table.
     pub header: Vec<&'static str>,
     pub rows: Vec<Vec<String>>,
 }
 
+/// Column definition.
+///
+/// A column is a tuple of a name and a function to get the value of the column for a given item.
 pub type TableColumn<T> = (&'static str, fn(&T) -> String);
 
 impl Table {
+    /// Create a new table.
+    ///
+    /// # Arguments
+    ///
+    /// * `header` - The header of the table.
+    /// * `rows` - The rows of the table.
     pub fn new(header: Vec<&'static str>, rows: Vec<Vec<String>>) -> Self {
         Self { header, rows }
     }
 
-    pub fn from_iter<'a, Iter, Item>(
-        iter: Iter,
-        columns: &[TableColumn<Item>],
-    ) -> Self
+    /// Create a new table from an iterator of items.
+    ///
+    /// # Arguments
+    ///
+    /// * `iter` - The iterator of items.
+    /// * `columns` - The columns of the table.
+    pub fn from_iter<'a, Iter, Item>(iter: Iter, columns: &[TableColumn<Item>]) -> Self
     where
         Iter: IntoIterator<Item = &'a Item>,
         Item: 'a,
     {
+        // Convert the iter into an actual iterator.
         let iter = iter.into_iter();
 
+        // Create the header from the column names.
         let header = columns.iter().map(|(name, _)| *name).collect();
+
+        // Create the rows from the items and columns.
         let rows = iter
             .map(|item| columns.iter().map(|(_, f)| f(item)).collect())
             .collect();
 
+        // Create the table.
         Self::new(header, rows)
     }
 }
@@ -45,6 +73,168 @@ impl Display for Table {
     }
 }
 
-pub trait IntoTable {
-    fn as_table(&self) -> Table;
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Test data structures
+    struct Person {
+        name: String,
+        age: u32,
+        city: String,
+    }
+
+    struct Product {
+        id: u32,
+        name: String,
+        price: f64,
+    }
+
+    #[test]
+    fn test_from_iter_single_row() {
+        let person = Person {
+            name: "Alice".to_string(),
+            age: 30,
+            city: "New York".to_string(),
+        };
+
+        let columns: &[TableColumn<Person>] = &[
+            ("Name", |p: &Person| p.name.clone()),
+            ("Age", |p: &Person| p.age.to_string()),
+            ("City", |p: &Person| p.city.clone()),
+        ];
+
+        let table = Table::from_iter([&person], columns);
+        let output = format!("{}", table);
+
+        assert_eq!(output, "Name\tAge\tCity\nAlice\t30\tNew York");
+    }
+
+    #[test]
+    fn test_from_iter_multiple_rows() {
+        let people = vec![
+            Person {
+                name: "Alice".to_string(),
+                age: 30,
+                city: "New York".to_string(),
+            },
+            Person {
+                name: "Bob".to_string(),
+                age: 25,
+                city: "London".to_string(),
+            },
+            Person {
+                name: "Charlie".to_string(),
+                age: 35,
+                city: "Paris".to_string(),
+            },
+        ];
+
+        let columns: &[TableColumn<Person>] = &[
+            ("Name", |p: &Person| p.name.clone()),
+            ("Age", |p: &Person| p.age.to_string()),
+            ("City", |p: &Person| p.city.clone()),
+        ];
+
+        let table = Table::from_iter(people.iter(), columns);
+        let output = format!("{}", table);
+
+        let expected = "Name\tAge\tCity\nAlice\t30\tNew York\nBob\t25\tLondon\nCharlie\t35\tParis";
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_from_iter_empty_iterator() {
+        let people: Vec<Person> = vec![];
+
+        let columns: &[TableColumn<Person>] = &[
+            ("Name", |p: &Person| p.name.clone()),
+            ("Age", |p: &Person| p.age.to_string()),
+        ];
+
+        let table = Table::from_iter(people.iter(), columns);
+        let output = format!("{}", table);
+
+        // Should only have the header, no rows
+        assert_eq!(output, "Name\tAge");
+    }
+
+    #[test]
+    fn test_from_iter_single_column() {
+        let products = vec![
+            Product {
+                id: 1,
+                name: "Widget".to_string(),
+                price: 9.99,
+            },
+            Product {
+                id: 2,
+                name: "Gadget".to_string(),
+                price: 19.99,
+            },
+        ];
+
+        let columns: &[TableColumn<Product>] = &[("Name", |p: &Product| p.name.clone())];
+
+        let table = Table::from_iter(products.iter(), columns);
+        let output = format!("{}", table);
+
+        assert_eq!(output, "Name\nWidget\nGadget");
+    }
+
+    #[test]
+    fn test_from_iter_numeric_types() {
+        let products = vec![
+            Product {
+                id: 1,
+                name: "Widget".to_string(),
+                price: 9.99,
+            },
+            Product {
+                id: 2,
+                name: "Gadget".to_string(),
+                price: 19.99,
+            },
+        ];
+
+        let columns: &[TableColumn<Product>] = &[
+            ("ID", |p: &Product| p.id.to_string()),
+            ("Name", |p: &Product| p.name.clone()),
+            ("Price", |p: &Product| p.price.to_string()),
+        ];
+
+        let table = Table::from_iter(products.iter(), columns);
+        let output = format!("{}", table);
+
+        assert_eq!(output, "ID\tName\tPrice\n1\tWidget\t9.99\n2\tGadget\t19.99");
+    }
+
+    #[test]
+    fn test_display_tab_separation() {
+        let table = Table::new(
+            vec!["Col1", "Col2", "Col3"],
+            vec![
+                vec!["A".to_string(), "B".to_string(), "C".to_string()],
+                vec!["X".to_string(), "Y".to_string(), "Z".to_string()],
+            ],
+        );
+
+        let output = format!("{}", table);
+        let lines: Vec<&str> = output.split('\n').collect();
+
+        // Check header uses tabs
+        assert_eq!(lines[0], "Col1\tCol2\tCol3");
+        // Check rows use tabs
+        assert_eq!(lines[1], "A\tB\tC");
+        assert_eq!(lines[2], "X\tY\tZ");
+    }
+
+    #[test]
+    fn test_display_empty_table() {
+        let table = Table::new(vec!["Header1", "Header2"], vec![]);
+        let output = format!("{}", table);
+
+        // Should only have the header
+        assert_eq!(output, "Header1\tHeader2");
+    }
 }

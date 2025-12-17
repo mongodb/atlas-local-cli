@@ -18,8 +18,9 @@ pub struct Cli {
     command: PluginSubCommands,
 }
 
-// Implement the Parser trait to allow us to use the Cli struct as a root command.
-// This allows us to invoke `Cli::parse()` to parse the CLI arguments.
+/// Implement the Parser trait to allow us to use the Cli struct as a root command.
+///
+/// This allows us to invoke `Cli::parse()` to parse the CLI arguments.
 impl clap::Parser for Cli {}
 
 impl Cli {
@@ -37,7 +38,11 @@ impl Cli {
     }
 }
 
-// Manually implement the CommandFactory trait to allow us to change the binary name based on if we're executing as a plugin or directly.
+/// Manually implement the CommandFactory trait to allow us to change the binary name based on execution mode.
+///
+/// This implementation allows the CLI to dynamically determine its binary name:
+/// - If executed as a plugin (`atlas local`), the binary name is "atlas"
+/// - If executed directly (`atlas-local`), the binary name is "atlas-local"
 impl clap::CommandFactory for Cli {
     fn command() -> clap::Command {
         // This based on what the Parse derive macro generates.
@@ -54,6 +59,10 @@ impl clap::CommandFactory for Cli {
     }
 }
 
+/// Enum representing the different ways the CLI can be invoked.
+///
+/// This enum handles the dual nature of the CLI: it can be run as a plugin (`atlas local`)
+/// or as a standalone command (`atlas-local`).
 #[derive(Subcommand)]
 pub enum PluginSubCommands {
     /// The local plugin subcommand
@@ -69,8 +78,10 @@ pub enum PluginSubCommands {
     Flat(LocalArgs),
 }
 
-// Convert CLI arguments to command
-// This allows us to transparently execute the command as a plugin or directly.
+/// Convert CLI arguments to local command arguments.
+///
+/// This allows us to transparently execute the command as a plugin or directly.
+/// The conversion extracts the actual command from the plugin wrapper if needed.
 impl From<Cli> for LocalArgs {
     fn from(cli: Cli) -> Self {
         match cli.command {

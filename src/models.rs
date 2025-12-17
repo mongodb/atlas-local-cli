@@ -1,15 +1,34 @@
+//! Data models for the application.
+//!
+//! This module contains the data structures used throughout the application.
+//! These models are typically simplified versions of the underlying library models,
+//! tailored for the CLI's display and formatting needs.
+
 use atlas_local::models::State;
 use semver::Version;
 use serde::Serialize;
 
-/// Deployment model
+/// Deployment model representing a local MongoDB deployment.
+///
+/// This is a simplified representation of a deployment, containing only the fields
+/// needed for CLI display and output formatting.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Deployment {
+    /// Name of the deployment.
+    /// If the name is not set, the container ID is used.
     pub name: String,
+
+    /// MongoDB version of the deployment.
     pub mongo_db_version: Version,
+
+    /// State of the deployment.
     pub state: State,
 }
 
+/// Convert from the underlying library's deployment model to the CLI's deployment model.
+///
+/// This conversion extracts only the relevant fields and handles the case where
+/// the deployment name might be `None` by falling back to the container ID.
 impl From<atlas_local::models::Deployment> for Deployment {
     fn from(deployment: atlas_local::models::Deployment) -> Self {
         Deployment {

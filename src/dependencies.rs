@@ -10,6 +10,7 @@ pub use mocks::*;
 // Dependency to list deployments
 #[async_trait]
 pub trait DeploymentLister {
+    /// Returns a list of all local deployments.
     async fn list(
         &self,
     ) -> Result<Vec<atlas_local::models::Deployment>, atlas_local::GetDeploymentError>;
