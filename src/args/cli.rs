@@ -10,7 +10,7 @@ use clap::{Args, Subcommand};
 
 use super::LocalArgs;
 
-/// Root command for the CLI.
+/// Manage local deployments
 #[derive(Args)]
 #[command(version, about, long_about = None)]
 pub struct Cli {

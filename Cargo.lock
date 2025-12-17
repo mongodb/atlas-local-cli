@@ -80,6 +80,24 @@ dependencies = [
 
 [[package]]
 name = "atlas-local"
+version = "0.0.2"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "atlas-local 0.1.0",
+ "bollard",
+ "clap",
+ "mockall",
+ "semver",
+ "serde",
+ "serde_json",
+ "tokio",
+ "trycmd",
+ "which",
+]
+
+[[package]]
+name = "atlas-local"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34b13239eecc5133fbbb5a9c234b22903e31f1bbb4c57df376373290831f0467"
@@ -92,24 +110,6 @@ dependencies = [
  "serde",
  "thiserror",
  "tokio",
-]
-
-[[package]]
-name = "atlas-local-cli"
-version = "0.0.2"
-dependencies = [
- "anyhow",
- "async-trait",
- "atlas-local",
- "bollard",
- "clap",
- "mockall",
- "semver",
- "serde",
- "serde_json",
- "tokio",
- "trycmd",
- "which",
 ]
 
 [[package]]

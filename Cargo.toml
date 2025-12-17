@@ -1,13 +1,9 @@
 [package]
-name = "atlas-local-cli"
+name = "atlas-local"
 version = "0.0.2"
 edition = "2024"
 license = "Apache-2.0"
 repository = "https://github.com/mongodb/atlas-local-cli/"
-
-[[bin]]
-name = "atlas-local"
-path = "src/main.rs"
 
 [features]
 default = []

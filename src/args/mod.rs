@@ -21,6 +21,6 @@ pub enum LocalArgs {
     List(List),
 }
 
-/// List all local MongoDB deployments.
+/// List all local deployments.
 #[derive(Parser)]
 pub struct List;
