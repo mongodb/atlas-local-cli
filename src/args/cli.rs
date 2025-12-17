@@ -25,6 +25,9 @@ impl clap::Parser for Cli {}
 
 impl Cli {
     /// Create a new command with the correct binary name based on if we're executing as a plugin or directly.
+    /// 
+    /// Setting the binary name changes the usage string in the help text.
+    /// e.g. if the binary name is "atlas", the usage string will be "Usage: atlas <COMMAND>".
     fn new_command() -> clap::Command {
         // If the first argument is "local" it means we're executing the executable as a plugin.
         // In that case the binary name should be "atlas" instead of "atlas-local".
@@ -38,11 +41,13 @@ impl Cli {
     }
 }
 
-/// Manually implement the CommandFactory trait to allow us to change the binary name based on execution mode.
+/// Manually implement the CommandFactory trait to change the help text format based on execution mode.
+/// 
+/// The main goal of this implementation is to ensure that the usage string in the help text aligns with the execution mode.
 ///
 /// This implementation allows the CLI to dynamically determine its binary name:
-/// - If executed as a plugin (`atlas local`), the binary name is "atlas"
-/// - If executed directly (`atlas-local`), the binary name is "atlas-local"
+/// - If executed as a plugin (`atlas local`), the binary name is "atlas", and the usage string is "Usage: atlas local <COMMAND>".
+/// - If executed directly (`atlas-local`), the binary name is "atlas-local", and the usage string is "Usage: atlas-local <COMMAND>".
 impl clap::CommandFactory for Cli {
     fn command() -> clap::Command {
         // This based on what the Parse derive macro generates.
