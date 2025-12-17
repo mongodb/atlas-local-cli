@@ -95,7 +95,7 @@ jobs:
 
     - name: Verify LICENSE-3RD-PARTY.txt is up to date
       run: |
-        cargo about generate --frozen about.hbs > LICENSE-3RD-PARTY-generated.txt
+        cargo about generate --locked about.hbs > LICENSE-3RD-PARTY-generated.txt
         if ! diff -q LICENSE-3RD-PARTY.txt LICENSE-3RD-PARTY-generated.txt > /dev/null; then
           echo "ERROR: LICENSE-3RD-PARTY.txt is not up to date!"
           echo "Please run: cargo about generate about.hbs > LICENSE-3RD-PARTY.txt"
@@ -217,6 +217,22 @@ jobs:
         run: |
           apt-get update
           apt-get install -y curl gcc
+      
+      - name: Install Atlas CLI
+        run: |
+          # Install dependencies
+          apt-get install -y gnupg curl
+          # Add MongoDB public key
+          curl -fsSL https://pgp.mongodb.com/server-8.0.asc | gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
+          # Add MongoDB repository
+          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-8.0.list
+          # Update repositories
+          apt-get update
+          # Install the Atlas CLI
+          apt-get install -y mongodb-atlas-cli
+          # Print the Atlas CLI version
+          atlas --version
+
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
 

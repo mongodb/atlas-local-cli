@@ -1,45 +1,37 @@
-use std::env;
+//! Main entry point for the Atlas Local CLI application.
+//!
+//! This module handles the application's startup flow:
+//! 1. Parses CLI arguments using clap
+//! 2. Converts CLI arguments into executable commands
+//! 3. Executes the commands and handles their output
+//!
+//! The application can be run either as a standalone CLI (`atlas-local`) or as an Atlas CLI plugin (`atlas local`).
 
-use anyhow::{Context, Ok, Result};
-use args::{Cli, LocalCommand};
+use anyhow::{Context, Result};
+use args::Cli;
 use clap::Parser;
-use dialoguer::Input;
+
+use crate::{args::LocalArgs, commands::command_from_args, formatting::Format};
 
 mod args;
+mod commands;
+mod dependencies;
+mod formatting;
+mod models;
+mod table;
 
-fn main() -> Result<()> {
-    let args: LocalCommand = Cli::parse().into();
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Parse the CLI arguments.
+    let cli_arguments: LocalArgs = Cli::parse().into();
 
-    match args {
-        LocalCommand::Hello => hello(),
-        LocalCommand::Printenv => printenv(),
-        LocalCommand::Stdinreader => stdinreader(),
-    }
-}
+    // Convert the CLI arguments into a command.
+    // TODO:Format is hardcoded to text for now, we will make it configurable later.
+    let mut root_command = command_from_args(cli_arguments, Format::Text)
+        .context("converting CLI arguments into a command")?;
 
-fn hello() -> Result<()> {
-    println!("Hello world!");
-
-    Ok(())
-}
-
-fn printenv() -> Result<()> {
-    println!("Environment variables: ");
-
-    for (key, value) in env::vars() {
-        println!("\t- {key}={value}");
-    }
-
-    Ok(())
-}
-
-fn stdinreader() -> Result<()> {
-    let name = Input::<String>::new()
-        .with_prompt("Please enter your name")
-        .interact_text()
-        .context("prompting name")?;
-
-    println!("Hello, {name}!");
+    // Execute the command.
+    root_command.execute().await.context("executing command")?;
 
     Ok(())
 }
