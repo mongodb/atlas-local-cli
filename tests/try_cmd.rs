@@ -22,6 +22,11 @@ fn try_cmd_e2e() {
         .run();
 }
 
+#[cfg(windows)]
+const BINARY_NAME: &str = "atlas-local.exe";
+#[cfg(not(windows))]
+const BINARY_NAME: &str = "atlas-local";
+
 fn bootstrap_atlas_cli_plugin() -> Result<PathBuf, Box<dyn std::error::Error>> {
     // Build the binary
     let build_output = Command::new("cargo")
@@ -53,7 +58,7 @@ fn bootstrap_atlas_cli_plugin() -> Result<PathBuf, Box<dyn std::error::Error>> {
     )?;
     fs::copy(
         &project_root.join("target/release/atlas-local"),
-        &atlas_local_plugin_dir.join("atlas-local"),
+        &atlas_local_plugin_dir.join(BINARY_NAME),
     )?;
 
     Ok(plugins_dir)
