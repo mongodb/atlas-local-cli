@@ -25,6 +25,22 @@ impl DeploymentLister for Client {
     }
 }
 
+#[async_trait]
+pub trait DeploymentDeleter {
+    async fn delete(&self, deployment_name: &str)
+    -> Result<(), atlas_local::DeleteDeploymentError>;
+}
+
+#[async_trait]
+impl DeploymentDeleter for Client {
+    async fn delete(
+        &self,
+        deployment_name: &str,
+    ) -> Result<(), atlas_local::DeleteDeploymentError> {
+        self.delete_deployment(deployment_name).await
+    }
+}
+
 #[cfg(test)]
 pub mod mocks {
     use super::*;
@@ -36,6 +52,11 @@ pub mod mocks {
         #[async_trait]
         impl DeploymentLister for Docker {
             async fn list(&self) -> Result<Vec<atlas_local::models::Deployment>, atlas_local::GetDeploymentError>;
+        }
+
+        #[async_trait]
+        impl DeploymentDeleter for Docker {
+            async fn delete(&self, deployment_name: &str) -> Result<(), atlas_local::DeleteDeploymentError>;
         }
     }
 }
