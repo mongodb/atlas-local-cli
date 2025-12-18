@@ -14,8 +14,9 @@ Manage local deployments
 Usage: atlas-local <COMMAND>
 
 Commands:
-  list  List all local deployments
-  help  Print this message or the help of the given subcommand(s)
+  delete  Delete a deployment
+  list    List all local deployments
+  help    Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help
@@ -34,8 +35,9 @@ The local plugin subcommand This is the root subcommand when executing the execu
 Usage: atlas local <COMMAND>
 
 Commands:
-  list  List all local deployments
-  help  Print this message or the help of the given subcommand(s)
+  delete  Delete a deployment
+  list    List all local deployments
+  help    Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help  Print help
