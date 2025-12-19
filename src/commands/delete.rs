@@ -54,7 +54,7 @@ pub enum DeleteResult {
         deployment_name: String,
         error: String,
     },
-    Cancelled {
+    Canceled {
         deployment_name: String,
     },
 }
@@ -73,7 +73,7 @@ impl Display for DeleteResult {
                 "Deleting deployment '{}' failed: {}",
                 deployment_name, error
             ),
-            Self::Cancelled { .. } => write!(f, "Deployment not deleted"),
+            Self::Canceled { .. } => write!(f, "Deployment not deleted"),
         }
     }
 }
@@ -99,7 +99,7 @@ impl CommandWithOutput for Delete {
                 ConfirmationPromptResult::No | ConfirmationPromptResult::Canceled
             ) {
                 // Operation cancelled by user.
-                return Ok(DeleteResult::Cancelled {
+                return Ok(DeleteResult::Canceled {
                     deployment_name: self.deployment_name.clone(),
                 });
             }
@@ -251,7 +251,7 @@ mod tests {
 
         assert_eq!(
             result,
-            DeleteResult::Cancelled {
+            DeleteResult::Canceled {
                 deployment_name: deployment_name.clone()
             }
         );
@@ -280,7 +280,7 @@ mod tests {
 
         assert_eq!(
             result,
-            DeleteResult::Cancelled {
+            DeleteResult::Canceled {
                 deployment_name: deployment_name.clone()
             }
         );

@@ -36,7 +36,7 @@ pub struct List;
 // Deleting a deployment will not remove saved connections from MongoDB for VS Code. This must be done manually. To learn more, see https://www.mongodb.com/docs/mongodb-vscode/connect/#remove-a-connection.
 #[derive(Parser)]
 pub struct Delete {
-    /// First positional argument
+    /// Name of the deployment to delete.
     #[arg(index = 1)]
     pub deployment_name: String,
 
