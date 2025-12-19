@@ -31,9 +31,9 @@ pub struct List;
 /// Delete a deployment.
 ///
 /// The command prompts you to confirm the operation when you run the command without the --force option.
-//
-// Deleting a Local deployment also deletes any local data volumes.
-// Deleting a deployment will not remove saved connections from MongoDB for VS Code. This must be done manually. To learn more, see https://www.mongodb.com/docs/mongodb-vscode/connect/#remove-a-connection.
+///
+/// Deleting a Local deployment also deletes any local data volumes.
+/// Deleting a deployment will not remove saved connections from MongoDB for VS Code. This must be done manually. To learn more, see https://www.mongodb.com/docs/mongodb-vscode/connect/#remove-a-connection.
 #[derive(Parser)]
 pub struct Delete {
     /// Name of the deployment to delete.
