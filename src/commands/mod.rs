@@ -5,7 +5,7 @@ use anyhow::Result;
 
 use crate::{
     args::LocalArgs,
-    commands::{delete::Delete, list::List},
+    commands::{delete::Delete, list::List, logs::Logs},
     formatting::Format,
 };
 pub use core::{Command, CommandWithOutput, CommandWithOutputExt};
@@ -13,6 +13,7 @@ pub use core::{Command, CommandWithOutput, CommandWithOutputExt};
 mod core;
 pub mod delete;
 pub mod list;
+pub mod logs;
 
 /// Convert CLI arguments into a command.
 ///
@@ -26,5 +27,6 @@ pub fn command_from_args(args: LocalArgs, format: Format) -> Result<Box<dyn Comm
             Delete::try_from(delete_args)?.with_print_to_stdout(format)
         }
         LocalArgs::List(list_args) => List::try_from(list_args)?.with_print_to_stdout(format),
+        LocalArgs::Logs(logs_args) => Logs::try_from(logs_args)?.with_print_to_stdout(format),
     }
 }

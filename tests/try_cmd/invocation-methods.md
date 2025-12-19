@@ -16,6 +16,7 @@ Usage: atlas-local <COMMAND>
 Commands:
   delete  Delete a deployment
   list    List all local deployments
+  logs    Get deployment logs
   help    Print this message or the help of the given subcommand(s)
 
 Options:
@@ -37,6 +38,7 @@ Usage: atlas local <COMMAND>
 Commands:
   delete  Delete a deployment
   list    List all local deployments
+  logs    Get deployment logs
   help    Print this message or the help of the given subcommand(s)
 
 Options:

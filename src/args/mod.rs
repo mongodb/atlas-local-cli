@@ -22,6 +22,8 @@ pub enum LocalArgs {
     Delete(Delete),
     #[command(alias = "ls")]
     List(List),
+    #[command(alias = "log")]
+    Logs(Logs),
 }
 
 /// List all local deployments.
@@ -43,4 +45,12 @@ pub struct Delete {
     /// Flag that indicates whether to skip the confirmation prompt before proceeding with the requested action.
     #[arg(long)]
     pub force: bool,
+}
+
+/// Get deployment logs.
+#[derive(Parser)]
+pub struct Logs {
+    /// Name of the deployment to get logs from.
+    #[arg(index = 1)]
+    pub deployment_name: String,
 }
