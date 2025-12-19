@@ -27,9 +27,6 @@ pub fn command_from_args(args: LocalArgs, format: Format) -> Result<Box<dyn Comm
             Delete::try_from(delete_args)?.with_print_to_stdout(format)
         }
         LocalArgs::List(list_args) => List::try_from(list_args)?.with_print_to_stdout(format),
-        LocalArgs::Logs(logs_args) => {
-            // Use the standard with_print_to_stdout since Logs is now Send
-            Logs::try_from(logs_args)?.with_print_to_stdout(format)
-        }
+        LocalArgs::Logs(logs_args) => Logs::try_from(logs_args)?.with_print_to_stdout(format),
     }
 }
