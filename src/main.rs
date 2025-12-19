@@ -17,6 +17,7 @@ mod args;
 mod commands;
 mod dependencies;
 mod formatting;
+mod interaction;
 mod models;
 mod table;
 
