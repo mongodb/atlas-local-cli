@@ -2,7 +2,10 @@
 //! easier to mock and substitute in tests or other environments. By abstracting external services
 //! behind traits, components can be decoupled and dependency-injected, improving testability and maintainability.
 use async_trait::async_trait;
-use atlas_local::Client;
+use atlas_local::{
+    Client, GetLogsError,
+    models::{LogOutput, LogsOptions},
+};
 
 #[cfg(test)]
 pub use mocks::*;
@@ -41,6 +44,27 @@ impl DeploymentDeleter for Client {
     }
 }
 
+// Dependency to get deployment logs
+#[async_trait]
+pub trait DeploymentLogsRetriever {
+    async fn get_logs(
+        &self,
+        container_id_or_name: &str,
+        options: Option<LogsOptions>,
+    ) -> Result<Vec<LogOutput>, GetLogsError>;
+}
+
+#[async_trait]
+impl DeploymentLogsRetriever for Client {
+    async fn get_logs(
+        &self,
+        container_id_or_name: &str,
+        options: Option<LogsOptions>,
+    ) -> Result<Vec<LogOutput>, GetLogsError> {
+        self.get_logs(container_id_or_name, options).await
+    }
+}
+
 #[cfg(test)]
 pub mod mocks {
     use super::*;
@@ -57,6 +81,11 @@ pub mod mocks {
         #[async_trait]
         impl DeploymentDeleter for Docker {
             async fn delete(&self, deployment_name: &str) -> Result<(), atlas_local::DeleteDeploymentError>;
+        }
+
+        #[async_trait]
+        impl DeploymentLogsRetriever for Docker {
+            async fn get_logs(&self, container_id_or_name: &str, options: Option<LogsOptions>) -> Result<Vec<LogOutput>, GetLogsError>;
         }
     }
 }
