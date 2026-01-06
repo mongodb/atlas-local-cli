@@ -5,6 +5,8 @@
 //!
 //! The business logic layer is [`crate::commands`], which receives these parsed arguments.
 
+use std::time::Duration;
+
 use clap::{Parser, Subcommand};
 
 mod cli;
@@ -24,6 +26,7 @@ pub enum LocalArgs {
     List(List),
     #[command(alias = "log")]
     Logs(Logs),
+    Start(Start),
 }
 
 /// List all local deployments.
@@ -53,4 +56,26 @@ pub struct Logs {
     /// Name of the deployment to get logs from.
     #[arg(index = 1)]
     pub deployment_name: String,
+}
+
+/// Start a deployment.
+#[derive(Parser)]
+pub struct Start {
+    /// Name of the deployment to start.
+    #[arg(index = 1)]
+    pub deployment_name: String,
+
+    /// Flag that indicates whether to wait for the deployment to be healthy before returning.
+    #[arg(long, default_value = "false")]
+    pub wait_for_healthy: bool,
+
+    /// Timeout for the wait for healthy deployment.
+    /// The format is a number followed by a unit. Relevant time units are ms, s, m, h
+    /// When no unit is provided, the unit is assumed to be seconds.
+    #[arg(long, default_value = "10m", value_parser = parse_duration)]
+    pub wait_for_healthy_timeout: Duration,
+}
+
+fn parse_duration(s: &str) -> Result<Duration, String> {
+    duration_str::parse(s).map_err(|e| e.to_string())
 }
