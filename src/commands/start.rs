@@ -181,7 +181,7 @@ impl CommandWithOutput for Start {
 
         if !self.wait_for_healthy {
             info!(
-                "deployment started, did not wait for healthy deployment (--wait-for-healthy=false)"
+                "deployment started, health check skipped (--wait-for-healthy=false)"
             );
 
             return Ok(StartResult::Started {
