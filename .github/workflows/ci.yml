@@ -106,6 +106,8 @@ jobs:
       run: |
         rustup update ${{ matrix.rust }}
         rustup default ${{ matrix.rust }}
+    - name: Install cargo-binstall
+      uses: cargo-bins/cargo-binstall@v1.16.2
 
     - name: Install cargo-llvm-cov
       shell: bash
