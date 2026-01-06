@@ -194,9 +194,9 @@ impl CommandWithOutput for Start {
             .start_spinner("Waiting for deployment to become healthy...".to_string())?;
 
         // now wait till the deployment is healthy
-        // based on the initial state, we allow the deployment to be unhealthy initially
+        // based on the initial state, it is possible for the deployment to start as unhealthy
         // this based on the possible state transitions for docker healthchecks: https://docs.docker.com/reference/dockerfile/#healthcheck
-        let allow_unhealthy_initial_state = match deployment.state {
+        let can_start_unhealthy = match deployment.state {
             // For these deployments we go from created to running and healthy/unhealthy
             // possible state transitions:
             // - starting -> healthy
@@ -218,10 +218,7 @@ impl CommandWithOutput for Start {
             State::Dead | State::Removing => false,
         };
 
-        debug!(
-            allow_unhealthy_initial_state,
-            "waiting for healthy deployment"
-        );
+        debug!(can_start_unhealthy, "waiting for healthy deployment");
 
         // wait till the deployment is healthy
         // If the deployment is not healthy within the timeout, return a failed result
@@ -230,7 +227,7 @@ impl CommandWithOutput for Start {
             .wait_for_healthy_deployment(
                 &self.deployment_name,
                 WatchOptions::builder()
-                    .allow_unhealthy_initial_state(allow_unhealthy_initial_state)
+                    .allow_unhealthy_initial_state(can_start_unhealthy)
                     .timeout_duration(self.wait_for_healthy_timeout)
                     .build(),
             )
