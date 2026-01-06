@@ -17,6 +17,7 @@ Commands:
   delete  Delete a deployment
   list    List all local deployments
   logs    Get deployment logs
+  start   Start a deployment
   help    Print this message or the help of the given subcommand(s)
 
 Options:
@@ -39,6 +40,7 @@ Commands:
   delete  Delete a deployment
   list    List all local deployments
   logs    Get deployment logs
+  start   Start a deployment
   help    Print this message or the help of the given subcommand(s)
 
 Options:
