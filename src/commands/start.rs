@@ -180,9 +180,7 @@ impl CommandWithOutput for Start {
         drop(start_spinner);
 
         if !self.wait_for_healthy {
-            info!(
-                "deployment started, health check skipped (--wait-for-healthy=false)"
-            );
+            info!("deployment started, health check skipped (--wait-for-healthy=false)");
 
             return Ok(StartResult::Started {
                 deployment_name: self.deployment_name.clone(),
