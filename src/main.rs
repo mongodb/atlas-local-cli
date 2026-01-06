@@ -18,6 +18,7 @@ mod commands;
 mod dependencies;
 mod formatting;
 mod interaction;
+mod logging;
 mod models;
 mod table;
 
@@ -25,6 +26,9 @@ mod table;
 async fn main() -> Result<()> {
     // Parse the CLI arguments.
     let cli_arguments: LocalArgs = Cli::parse().into();
+
+    // Setup logging.
+    logging::setup_logging();
 
     // Convert the CLI arguments into a command.
     // TODO:Format is hardcoded to text for now, we will make it configurable later.

@@ -3,8 +3,9 @@
 //! behind traits, components can be decoupled and dependency-injected, improving testability and maintainability.
 use async_trait::async_trait;
 use atlas_local::{
-    Client, GetLogsError,
-    models::{LogOutput, LogsOptions},
+    Client, GetDeploymentError, GetLogsError,
+    client::{StartDeploymentError, UnpauseDeploymentError, WatchDeploymentError},
+    models::{Deployment, LogOutput, LogsOptions, WatchOptions},
 };
 
 #[cfg(test)]
@@ -65,6 +66,67 @@ impl DeploymentLogsRetriever for Client {
     }
 }
 
+#[async_trait]
+pub trait DeploymentStarter {
+    async fn start(&self, deployment_name: &str) -> Result<(), StartDeploymentError>;
+}
+
+#[async_trait]
+impl DeploymentStarter for Client {
+    async fn start(&self, deployment_name: &str) -> Result<(), StartDeploymentError> {
+        self.start_deployment(deployment_name).await
+    }
+}
+
+#[async_trait]
+pub trait DeploymentGetDeployment {
+    async fn get_deployment(&self, deployment_name: &str)
+    -> Result<Deployment, GetDeploymentError>;
+}
+
+#[async_trait]
+impl DeploymentGetDeployment for Client {
+    async fn get_deployment(
+        &self,
+        deployment_name: &str,
+    ) -> Result<Deployment, GetDeploymentError> {
+        self.get_deployment(deployment_name).await
+    }
+}
+
+#[async_trait]
+pub trait DeploymentUnpauser {
+    async fn unpause(&self, deployment_name: &str) -> Result<(), UnpauseDeploymentError>;
+}
+
+#[async_trait]
+impl DeploymentUnpauser for Client {
+    async fn unpause(&self, deployment_name: &str) -> Result<(), UnpauseDeploymentError> {
+        self.unpause_deployment(deployment_name).await
+    }
+}
+
+#[async_trait]
+pub trait DeploymentWaiter {
+    async fn wait_for_healthy_deployment(
+        &self,
+        deployment_name: &str,
+        options: WatchOptions,
+    ) -> Result<(), WatchDeploymentError>;
+}
+
+#[async_trait]
+impl DeploymentWaiter for Client {
+    async fn wait_for_healthy_deployment(
+        &self,
+        deployment_name: &str,
+        options: WatchOptions,
+    ) -> Result<(), WatchDeploymentError> {
+        self.wait_for_healthy_deployment(deployment_name, options)
+            .await
+    }
+}
+
 #[cfg(test)]
 pub mod mocks {
     use super::*;
@@ -86,6 +148,26 @@ pub mod mocks {
         #[async_trait]
         impl DeploymentLogsRetriever for Docker {
             async fn get_logs(&self, container_id_or_name: &str, options: Option<LogsOptions>) -> Result<Vec<LogOutput>, GetLogsError>;
+        }
+
+        #[async_trait]
+        impl DeploymentStarter for Docker {
+            async fn start(&self, deployment_name: &str) -> Result<(), StartDeploymentError>;
+        }
+
+        #[async_trait]
+        impl DeploymentGetDeployment for Docker {
+            async fn get_deployment(&self, deployment_name: &str) -> Result<Deployment, GetDeploymentError>;
+        }
+
+        #[async_trait]
+        impl DeploymentUnpauser for Docker {
+            async fn unpause(&self, deployment_name: &str) -> Result<(), UnpauseDeploymentError>;
+        }
+
+        #[async_trait]
+        impl DeploymentWaiter for Docker {
+            async fn wait_for_healthy_deployment(&self, deployment_name: &str, options: WatchOptions) -> Result<(), WatchDeploymentError>;
         }
     }
 }
