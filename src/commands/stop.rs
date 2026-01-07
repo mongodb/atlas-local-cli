@@ -113,19 +113,9 @@ impl CommandWithOutput for Stop {
         debug!(?deployment, "deployment found");
 
         match deployment.state {
-            State::Running | State::Restarting => {
+            State::Running | State::Restarting | State::Paused => {
                 // stop the deployment when it's running or restarting
                 debug!(state=?deployment.state, "stopping deployment");
-
-                self.deployment_management
-                    .stop(&self.deployment_name)
-                    .await?;
-
-                debug!("deployment stopped");
-            }
-            State::Paused => {
-                // stop the paused deployment (transitions to Exited)
-                debug!(state=?deployment.state, "stopping paused deployment");
 
                 self.deployment_management
                     .stop(&self.deployment_name)
