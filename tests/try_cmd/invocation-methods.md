@@ -18,6 +18,7 @@ Commands:
   list    List all local deployments
   logs    Get deployment logs
   start   Start a deployment
+  stop    Stop (pause) a deployment
   help    Print this message or the help of the given subcommand(s)
 
 Options:
@@ -41,6 +42,7 @@ Commands:
   list    List all local deployments
   logs    Get deployment logs
   start   Start a deployment
+  stop    Stop (pause) a deployment
   help    Print this message or the help of the given subcommand(s)
 
 Options:

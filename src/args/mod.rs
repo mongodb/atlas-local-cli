@@ -27,6 +27,8 @@ pub enum LocalArgs {
     #[command(alias = "log")]
     Logs(Logs),
     Start(Start),
+    #[command(alias = "pause")]
+    Stop(Stop),
 }
 
 /// List all local deployments.
@@ -74,6 +76,14 @@ pub struct Start {
     /// When no unit is provided, the unit is assumed to be seconds.
     #[arg(long, default_value = "10m", value_parser = parse_duration)]
     pub wait_for_healthy_timeout: Duration,
+}
+
+/// Stop (pause) a deployment.
+#[derive(Parser)]
+pub struct Stop {
+    /// Name of the deployment to stop.
+    #[arg(index = 1)]
+    pub deployment_name: String,
 }
 
 fn parse_duration(s: &str) -> Result<Duration, String> {

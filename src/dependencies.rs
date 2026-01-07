@@ -4,7 +4,9 @@
 use async_trait::async_trait;
 use atlas_local::{
     Client, GetDeploymentError, GetLogsError,
-    client::{StartDeploymentError, UnpauseDeploymentError, WatchDeploymentError},
+    client::{
+        StartDeploymentError, StopDeploymentError, UnpauseDeploymentError, WatchDeploymentError,
+    },
     models::{Deployment, LogOutput, LogsOptions, WatchOptions},
 };
 
@@ -107,6 +109,18 @@ impl DeploymentUnpauser for Client {
 }
 
 #[async_trait]
+pub trait DeploymentStopper {
+    async fn stop(&self, deployment_name: &str) -> Result<(), StopDeploymentError>;
+}
+
+#[async_trait]
+impl DeploymentStopper for Client {
+    async fn stop(&self, deployment_name: &str) -> Result<(), StopDeploymentError> {
+        self.stop_deployment(deployment_name).await
+    }
+}
+
+#[async_trait]
 pub trait DeploymentWaiter {
     async fn wait_for_healthy_deployment(
         &self,
@@ -163,6 +177,11 @@ pub mod mocks {
         #[async_trait]
         impl DeploymentUnpauser for Docker {
             async fn unpause(&self, deployment_name: &str) -> Result<(), UnpauseDeploymentError>;
+        }
+
+        #[async_trait]
+        impl DeploymentStopper for Docker {
+            async fn stop(&self, deployment_name: &str) -> Result<(), StopDeploymentError>;
         }
 
         #[async_trait]
