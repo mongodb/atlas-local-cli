@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use anyhow::Result;
 use typed_builder::TypedBuilder;
 
@@ -14,14 +16,16 @@ impl Interaction {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, TypedBuilder)]
-pub struct ConfirmationPromptOptions<'a> {
-    message: &'a str,
+pub struct ConfirmationPromptOptions {
+    message: String,
+    #[builder(default, setter(strip_option))]
+    placeholder: Option<String>,
     #[builder(default, setter(strip_option))]
     default: Option<bool>,
     #[builder(default, setter(strip_option))]
-    pre_confirmation_help_text: Option<&'a str>,
+    pre_confirmation_help_text: Option<String>,
     #[builder(default, setter(strip_option))]
-    post_confirmation_help_text: Option<&'a str>,
+    post_confirmation_help_text: Option<String>,
 }
 
 pub enum ConfirmationPromptResult {
@@ -31,10 +35,68 @@ pub enum ConfirmationPromptResult {
 }
 
 pub trait ConfirmationPrompt {
-    fn confirm<'a>(
-        &self,
-        options: ConfirmationPromptOptions<'a>,
-    ) -> Result<ConfirmationPromptResult>;
+    fn confirm(&self, options: ConfirmationPromptOptions) -> Result<ConfirmationPromptResult>;
+}
+
+#[derive(TypedBuilder)]
+pub struct InputPromptOptions {
+    pub message: String,
+    #[builder(default, setter(strip_option(fallback = default_opt)))]
+    pub default: Option<String>,
+    #[builder(default, setter(strip_option))]
+    pub validator: Option<InputPromptValidator>,
+    // When this is set, the input prompt will not be prompted for
+    // The input will immediately be returned as the final answer as if the user had already provided the input
+    #[builder(default)]
+    pub final_answer: Option<String>,
+}
+
+#[derive(Clone)]
+// We're using an Rc because the validator needs to be cloneable, this is the most elegant way to do this
+pub struct InputPromptValidator(Rc<dyn InputValidator>);
+
+impl InputPromptValidator {
+    pub fn new(validator: impl InputValidator + 'static) -> Self {
+        Self(Rc::new(validator))
+    }
+}
+
+pub trait InputValidator {
+    fn validate(&self, input: &str) -> Result<InputValidatorResult>;
+}
+
+pub enum InputValidatorResult {
+    Valid,
+    Invalid(String),
+}
+
+pub enum InputPromptResult {
+    Input(String),
+    Canceled,
+}
+
+pub trait InputPrompt {
+    fn input(&self, options: InputPromptOptions) -> Result<InputPromptResult>;
+}
+
+#[derive(Debug, PartialEq, Eq, TypedBuilder)]
+pub struct SelectPromptOptions {
+    #[builder(setter(transform = |s: impl Into<String>| s.into()))]
+    message: String,
+    #[builder(setter(transform = |items: impl IntoIterator<Item = impl Into<String>>| {
+        items.into_iter().map(|s| s.into()).collect()
+    }))]
+    options: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SelectPromptResult {
+    Selected(String),
+    Canceled,
+}
+
+pub trait SelectPrompt {
+    fn select(&self, options: SelectPromptOptions) -> Result<SelectPromptResult>;
 }
 
 pub struct SpinnerHandle {
@@ -61,6 +123,35 @@ pub trait SpinnerInteraction {
     fn start_spinner(&self, message: String) -> Result<SpinnerHandle>;
 }
 
+pub trait MultiStepSpinnerInteraction {
+    fn start_multi_step_spinner(
+        &self,
+        steps: Vec<MultiStepSpinnerStep>,
+    ) -> Result<Box<dyn MultiStepSpinner + Send + Sync>>;
+}
+
+pub struct MultiStepSpinnerStep {
+    message: String,
+}
+
+impl MultiStepSpinnerStep {
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+        }
+    }
+}
+
+pub trait MultiStepSpinner {
+    fn set_step_outcome(&mut self, step: usize, outcome: MultiStepSpinnerOutcome) -> Result<()>;
+}
+
+pub enum MultiStepSpinnerOutcome {
+    Success,
+    Skipped,
+    Failure,
+}
+
 #[cfg(test)]
 pub mod mocks {
     use super::*;
@@ -70,11 +161,19 @@ pub mod mocks {
         pub Interaction {}
 
         impl ConfirmationPrompt for Interaction {
-            fn confirm<'a>(&self, options: ConfirmationPromptOptions<'a>) -> Result<ConfirmationPromptResult>;
+            fn confirm(&self, options: ConfirmationPromptOptions) -> Result<ConfirmationPromptResult>;
         }
 
         impl SpinnerInteraction for Interaction {
             fn start_spinner(&self, message: String) -> Result<SpinnerHandle>;
+        }
+
+        impl InputPrompt for Interaction {
+            fn input(&self, options: InputPromptOptions) -> Result<InputPromptResult>;
+        }
+
+        impl SelectPrompt for Interaction {
+            fn select(&self, options: SelectPromptOptions) -> Result<SelectPromptResult>;
         }
     }
 }
