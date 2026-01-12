@@ -150,6 +150,7 @@ impl CommandWithOutput for Setup {
         // Create the deployment
         let create_deployment_options = CreateDeploymentOptions {
             name: self.deployment_name.clone(),
+            mongodb_version: self.mdb_version.clone(),
             creation_source: Some(CreationSource::AtlasLocal),
             wait_until_healthy: Some(true),
             local_seed_location: self
@@ -464,8 +465,9 @@ mod tests {
     use atlas_local::{
         client::{CreateDeploymentProgress, CreateDeploymentStepOutcome},
         models::{
-            Deployment as AtlasDeployment, MongoDBVersion, MongoDBVersionMajor,
-            MongoDBVersionMajorMinor, MongoDBVersionMajorMinorPatch, MongodbType,
+            BindingType, CreationSource, Deployment as AtlasDeployment, MongoDBVersion,
+            MongoDBVersionMajor, MongoDBVersionMajorMinor, MongoDBVersionMajorMinorPatch,
+            MongodbType,
         },
     };
     use futures_util::FutureExt;
@@ -648,9 +650,32 @@ mod tests {
             Some(false),
         );
         let progress = create_successful_progress(deployment);
+        let expected_name = deployment_name.clone();
+        let expected_version = MongoDBVersion::MajorMinorPatch(MongoDBVersionMajorMinorPatch {
+            major: 8,
+            minor: 2,
+            patch: 2,
+        });
         mock_deployment_management
             .expect_create_deployment()
-            .return_once(move |_| progress);
+            .return_once(move |options| {
+                assert_eq!(options.name, Some(expected_name));
+                assert_eq!(options.mongodb_version, Some(expected_version.clone()));
+                assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
+                assert_eq!(options.wait_until_healthy, Some(true));
+                assert_eq!(options.local_seed_location, None);
+                assert_eq!(options.mongodb_initdb_root_username, None);
+                assert_eq!(options.mongodb_initdb_root_password, None);
+                assert_eq!(options.load_sample_data, Some(false));
+                assert!(options.mongodb_port_binding.is_some());
+                if let Some(binding) = &options.mongodb_port_binding {
+                    assert_eq!(binding.port, Some(27017));
+                    assert!(matches!(binding.binding_type, BindingType::Loopback));
+                }
+                assert_eq!(options.image, None);
+                assert_eq!(options.skip_pull_image, Some(false));
+                progress
+            });
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
@@ -710,9 +735,27 @@ mod tests {
             Some(false),
         );
         let progress = create_successful_progress(deployment);
+        let expected_name = deployment_name.clone();
         mock_deployment_management
             .expect_create_deployment()
-            .return_once(move |_| progress);
+            .return_once(move |options| {
+                assert_eq!(options.name, Some(expected_name));
+                assert_eq!(options.mongodb_version, None);
+                assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
+                assert_eq!(options.wait_until_healthy, Some(true));
+                assert_eq!(options.local_seed_location, None);
+                assert_eq!(options.mongodb_initdb_root_username, None);
+                assert_eq!(options.mongodb_initdb_root_password, None);
+                assert_eq!(options.load_sample_data, None);
+                assert!(options.mongodb_port_binding.is_some());
+                if let Some(binding) = &options.mongodb_port_binding {
+                    assert_eq!(binding.port, None);
+                    assert!(matches!(binding.binding_type, BindingType::Loopback));
+                }
+                assert_eq!(options.image, None);
+                assert_eq!(options.skip_pull_image, Some(false));
+                progress
+            });
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
@@ -793,9 +836,29 @@ mod tests {
             Some(true),
         );
         let progress = create_successful_progress(deployment);
+        let expected_name = deployment_name.clone();
+        let expected_version =
+            MongoDBVersion::MajorMinor(MongoDBVersionMajorMinor { major: 8, minor: 0 });
         mock_deployment_management
             .expect_create_deployment()
-            .return_once(move |_| progress);
+            .return_once(move |options| {
+                assert_eq!(options.name, Some(expected_name));
+                assert_eq!(options.mongodb_version, Some(expected_version.clone()));
+                assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
+                assert_eq!(options.wait_until_healthy, Some(true));
+                assert_eq!(options.local_seed_location, None);
+                assert_eq!(options.mongodb_initdb_root_username, None);
+                assert_eq!(options.mongodb_initdb_root_password, None);
+                assert_eq!(options.load_sample_data, Some(true));
+                assert!(options.mongodb_port_binding.is_some());
+                if let Some(binding) = &options.mongodb_port_binding {
+                    assert_eq!(binding.port, Some(27018));
+                    assert!(matches!(binding.binding_type, BindingType::Loopback));
+                }
+                assert_eq!(options.image, None);
+                assert_eq!(options.skip_pull_image, Some(false));
+                progress
+            });
 
         let mut setup_command = create_setup_command(
             None,
@@ -876,9 +939,29 @@ mod tests {
             Some(false),
         );
         let progress = create_successful_progress(deployment);
+        let expected_name = deployment_name.clone();
+        let expected_version =
+            MongoDBVersion::MajorMinor(MongoDBVersionMajorMinor { major: 8, minor: 1 });
         mock_deployment_management
             .expect_create_deployment()
-            .return_once(move |_| progress);
+            .return_once(move |options| {
+                assert_eq!(options.name, Some(expected_name));
+                assert_eq!(options.mongodb_version, Some(expected_version.clone()));
+                assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
+                assert_eq!(options.wait_until_healthy, Some(true));
+                assert_eq!(options.local_seed_location, None);
+                assert_eq!(options.mongodb_initdb_root_username, None);
+                assert_eq!(options.mongodb_initdb_root_password, None);
+                assert_eq!(options.load_sample_data, Some(false));
+                assert!(options.mongodb_port_binding.is_some());
+                if let Some(binding) = &options.mongodb_port_binding {
+                    assert_eq!(binding.port, Some(27019));
+                    assert!(matches!(binding.binding_type, BindingType::Loopback));
+                }
+                assert_eq!(options.image, None);
+                assert_eq!(options.skip_pull_image, Some(false));
+                progress
+            });
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
@@ -943,9 +1026,28 @@ mod tests {
             Some(false),
         );
         let progress = create_successful_progress(deployment);
+        let expected_name = deployment_name.clone();
+        let expected_version = MongoDBVersion::Major(MongoDBVersionMajor { major: 8 });
         mock_deployment_management
             .expect_create_deployment()
-            .return_once(move |_| progress);
+            .return_once(move |options| {
+                assert_eq!(options.name, Some(expected_name));
+                assert_eq!(options.mongodb_version, Some(expected_version.clone()));
+                assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
+                assert_eq!(options.wait_until_healthy, Some(true));
+                assert_eq!(options.local_seed_location, None);
+                assert_eq!(options.mongodb_initdb_root_username, None);
+                assert_eq!(options.mongodb_initdb_root_password, None);
+                assert_eq!(options.load_sample_data, Some(false));
+                assert!(options.mongodb_port_binding.is_some());
+                if let Some(binding) = &options.mongodb_port_binding {
+                    assert_eq!(binding.port, Some(27017));
+                    assert!(matches!(binding.binding_type, BindingType::Loopback));
+                }
+                assert_eq!(options.image, None);
+                assert_eq!(options.skip_pull_image, Some(false));
+                progress
+            });
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
@@ -1219,6 +1321,7 @@ mod tests {
         let mock_interaction = create_mock_interaction_with_spinner(outcomes.clone());
 
         let mut mock_deployment_management = MockDocker::new();
+        let expected_name = deployment_name.clone();
         let progress = create_mock_progress(
             CreateDeploymentStepOutcome::Failure,
             CreateDeploymentStepOutcome::Skipped,
@@ -1232,7 +1335,13 @@ mod tests {
         );
         mock_deployment_management
             .expect_create_deployment()
-            .return_once(move |_| progress);
+            .return_once(move |options| {
+                assert_eq!(options.name, Some(expected_name));
+                assert_eq!(options.mongodb_version, None);
+                assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
+                assert_eq!(options.wait_until_healthy, Some(true));
+                progress
+            });
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
@@ -1293,9 +1402,16 @@ mod tests {
             wait_for_healthy_deployment_finished: healthy_r.fuse(),
             deployment: deploy_r.fuse(),
         };
+        let expected_name = deployment_name.clone();
         mock_deployment_management
             .expect_create_deployment()
-            .return_once(move |_| progress);
+            .return_once(move |options| {
+                assert_eq!(options.name, Some(expected_name));
+                assert_eq!(options.mongodb_version, None);
+                assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
+                assert_eq!(options.wait_until_healthy, Some(true));
+                progress
+            });
 
         let mut setup_command = create_setup_command(
             Some(deployment_name),
