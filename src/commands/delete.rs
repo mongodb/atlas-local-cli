@@ -88,8 +88,8 @@ impl CommandWithOutput for Delete {
                 .interaction
                 .confirm(
                     ConfirmationPromptOptions::builder()
-                        .pre_confirmation_help_text("This operation will delete the deployment, and all of its data. This action cannot be undone.")
-                        .message(&format!("Are you sure you want to terminate '{}'?", self.deployment_name))
+                        .pre_confirmation_help_text("This operation will delete the deployment, and all of its data. This action cannot be undone.".to_string())
+                        .message(format!("Are you sure you want to terminate '{}'?", self.deployment_name))
                         .default(false)
                         .build())
                 .context("confirming deletion")?;

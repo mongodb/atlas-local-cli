@@ -5,9 +5,10 @@ use async_trait::async_trait;
 use atlas_local::{
     Client, GetDeploymentError, GetLogsError,
     client::{
-        StartDeploymentError, StopDeploymentError, UnpauseDeploymentError, WatchDeploymentError,
+        CreateDeploymentProgress, StartDeploymentError, StopDeploymentError,
+        UnpauseDeploymentError, WatchDeploymentError,
     },
-    models::{Deployment, LogOutput, LogsOptions, WatchOptions},
+    models::{CreateDeploymentOptions, Deployment, LogOutput, LogsOptions, WatchOptions},
 };
 
 #[cfg(test)]
@@ -141,6 +142,22 @@ impl DeploymentWaiter for Client {
     }
 }
 
+pub trait DeploymentCreator {
+    fn create_deployment(
+        &self,
+        deployment_options: CreateDeploymentOptions,
+    ) -> CreateDeploymentProgress;
+}
+
+impl DeploymentCreator for Client {
+    fn create_deployment(
+        &self,
+        deployment_options: CreateDeploymentOptions,
+    ) -> CreateDeploymentProgress {
+        self.create_deployment(deployment_options)
+    }
+}
+
 #[cfg(test)]
 pub mod mocks {
     use super::*;
@@ -187,6 +204,10 @@ pub mod mocks {
         #[async_trait]
         impl DeploymentWaiter for Docker {
             async fn wait_for_healthy_deployment(&self, deployment_name: &str, options: WatchOptions) -> Result<(), WatchDeploymentError>;
+        }
+
+        impl DeploymentCreator for Docker {
+            fn create_deployment(&self, deployment_options: CreateDeploymentOptions) -> CreateDeploymentProgress;
         }
     }
 }
