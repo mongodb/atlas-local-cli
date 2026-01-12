@@ -99,7 +99,7 @@ version = "0.0.2"
 dependencies = [
  "anyhow",
  "async-trait",
- "atlas-local 0.3.0",
+ "atlas-local 0.4.0",
  "bollard",
  "bytes",
  "clap",
@@ -123,8 +123,9 @@ dependencies = [
 
 [[package]]
 name = "atlas-local"
-version = "0.3.0"
-source = "git+https://github.com/mongodb/atlas-local-lib.git?rev=bf013f9a17680129ad361df3bdc080ed4254e726#bf013f9a17680129ad361df3bdc080ed4254e726"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "39785e7e6abddcc2d05d6fa91217e89a983926948ed5eef1e9c04c159bcad9f0"
 dependencies = [
  "bollard",
  "bytes",
