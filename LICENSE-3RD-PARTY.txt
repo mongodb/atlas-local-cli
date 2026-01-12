@@ -1708,8 +1708,8 @@ OVERVIEW OF LICENSES:
 -----------------------------------------------------------------------------
                         Apache License 2.0
         applies to: 
-        - atlas-local 0.3.0 (https://github.com/mongodb/atlas-local-lib)
         - atlas-local 0.0.2 (https://github.com/mongodb/atlas-local-cli/)
+        - atlas-local 0.4.0 (https://github.com/mongodb/atlas-local-lib)
         - content_inspector 0.2.4 (https://github.com/sharkdp/content_inspector)
 -----------------------------------------------------------------------------
 
