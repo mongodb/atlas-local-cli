@@ -28,7 +28,7 @@ impl InputValidator for PortValidator {
 
         match input.parse::<u16>() {
             Ok(port) => {
-                if port < 1 {
+                if port == 0 {
                     return invalid_port_result();
                 }
                 Ok(InputValidatorResult::Valid)
