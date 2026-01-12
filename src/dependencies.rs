@@ -205,5 +205,9 @@ pub mod mocks {
         impl DeploymentWaiter for Docker {
             async fn wait_for_healthy_deployment(&self, deployment_name: &str, options: WatchOptions) -> Result<(), WatchDeploymentError>;
         }
+
+        impl DeploymentCreator for Docker {
+            fn create_deployment(&self, deployment_options: CreateDeploymentOptions) -> CreateDeploymentProgress;
+        }
     }
 }

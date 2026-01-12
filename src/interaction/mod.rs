@@ -175,5 +175,9 @@ pub mod mocks {
         impl SelectPrompt for Interaction {
             fn select(&self, options: SelectPromptOptions) -> Result<SelectPromptResult>;
         }
+
+        impl MultiStepSpinnerInteraction for Interaction {
+            fn start_multi_step_spinner(&self, steps: Vec<MultiStepSpinnerStep>) -> Result<Box<dyn MultiStepSpinner + Send + Sync>>;
+        }
     }
 }

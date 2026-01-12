@@ -105,6 +105,8 @@ dependencies = [
  "clap",
  "console",
  "duration-str",
+ "futures",
+ "futures-util",
  "indicatif",
  "inquire",
  "mockall",

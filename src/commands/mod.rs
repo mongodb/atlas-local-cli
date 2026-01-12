@@ -17,6 +17,7 @@ pub mod logs;
 pub mod setup;
 pub mod start;
 pub mod stop;
+mod validators;
 
 /// Convert CLI arguments into a command.
 ///
