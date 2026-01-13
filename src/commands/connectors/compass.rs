@@ -16,11 +16,11 @@ impl Compass {
 #[async_trait]
 impl Connector for Compass {
     async fn is_available(&self) -> bool {
-        compass_bin().await.exists()
+        compass_bin().exists()
     }
 
     async fn launch(&self, params: &DeploymentParams) -> Result<()> {
-        launch(compass_bin().await, |command| {
+        launch(compass_bin(), |command| {
             command.arg(&params.connection_string);
         })
         .await
@@ -29,7 +29,7 @@ impl Connector for Compass {
 
 // returns the compass binary on macOS
 #[cfg(target_os = "macos")]
-async fn compass_bin() -> PathBuf {
+fn compass_bin() -> PathBuf {
     PathBuf::from("/Applications/MongoDB Compass.app/Contents/MacOS/MongoDB Compass")
 }
 
