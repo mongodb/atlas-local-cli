@@ -149,6 +149,12 @@ pub struct Setup {
     /// The default is false.
     #[arg(long, default_value = "false")]
     pub skip_pull_image: bool,
+
+    /// Method for connecting to the deployment after setup.
+    ///
+    /// If not provided, the user will be prompted to select a connection method.
+    #[arg(long)]
+    pub connect_with: Option<ConnectWith>,
 }
 
 /// Stop (pause) a deployment.
