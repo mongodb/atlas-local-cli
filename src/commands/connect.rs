@@ -1,10 +1,15 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, time::Duration};
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use atlas_local::{Client, GetDeploymentError};
+use atlas_local::{
+    Client, GetDeploymentError,
+    client::WatchDeploymentError,
+    models::{State, WatchOptions},
+};
 use bollard::Docker;
 use serde::Serialize;
+use tracing::debug;
 
 use crate::{
     args::{self, ConnectWith},
@@ -12,23 +17,49 @@ use crate::{
         CommandWithOutput,
         connectors::{Compass, Connector, DeploymentParams, Mongosh, VsCode},
     },
-    dependencies::{DeploymentGetConnectionString, DeploymentGetDeployment},
+    dependencies::{
+        DeploymentGetConnectionString, DeploymentGetDeployment, DeploymentStarter,
+        DeploymentUnpauser, DeploymentWaiter,
+    },
+    interaction::{
+        Interaction, MultiStepSpinnerInteraction, MultiStepSpinnerOutcome, MultiStepSpinnerStep,
+    },
 };
 
-// Start dependencies for the start command
+const DEFAULT_WAIT_FOR_HEALTHY_TIMEOUT: Duration = Duration::from_secs(60);
+
+// Dependencies for the connect command
 pub trait ConnectDeploymentManagement:
-    DeploymentGetConnectionString + DeploymentGetDeployment + Send
+    DeploymentGetConnectionString
+    + DeploymentGetDeployment
+    + DeploymentStarter
+    + DeploymentUnpauser
+    + DeploymentWaiter
+    + Send
+    + Sync
 {
 }
-impl<T: DeploymentGetConnectionString + DeploymentGetDeployment + Send> ConnectDeploymentManagement
-    for T
+impl<
+    T: DeploymentGetConnectionString
+        + DeploymentGetDeployment
+        + DeploymentStarter
+        + DeploymentUnpauser
+        + DeploymentWaiter
+        + Send
+        + Sync,
+> ConnectDeploymentManagement for T
 {
 }
+
+// Interaction dependencies for the connect command
+pub trait ConnectInteraction: MultiStepSpinnerInteraction + Send + Sync {}
+impl<T: MultiStepSpinnerInteraction + Send + Sync> ConnectInteraction for T {}
 
 pub struct Connect {
     deployment_name: String,
     connector: ConnectWith,
 
+    interaction: Box<dyn ConnectInteraction>,
     deployment_inspector: Box<dyn ConnectDeploymentManagement>,
     connectors: HashMap<ConnectWith, Box<dyn Connector + Send + Sync>>,
 }
@@ -70,6 +101,7 @@ impl TryFrom<args::Connect> for Connect {
         Ok(Self {
             deployment_name: args.deployment_name,
             connector: args.connector,
+            interaction: Box::new(Interaction::new()),
             deployment_inspector: Box::new(Client::new(Docker::connect_with_defaults()?)),
             connectors: HashMap::from([
                 (
@@ -120,6 +152,9 @@ impl Connect {
                 GetDeploymentError::IntoDeployment(e) => ConnectInnerError::ActualError(e.into()),
             })?;
 
+        // Start/unpause the deployment if needed, or error on bad states
+        self.start_deployment_if_needed(deployment.state).await?;
+
         // Get the connection string
         let connection_string = self
             .deployment_inspector
@@ -169,17 +204,141 @@ impl Connect {
             connection_string: None,
         })
     }
+
+    async fn start_deployment_if_needed(&self, state: State) -> Result<(), ConnectInnerError> {
+        // Determine what action to take based on state
+        let action = match state {
+            State::Created | State::Exited => Some(StartAction::Start),
+            State::Paused => Some(StartAction::Unpause),
+            State::Running | State::Restarting => None,
+            State::Dead => {
+                debug!(?state, "deployment is dead, returning failed result");
+                return Err(ConnectInnerError::Failed("Deployment is dead".to_string()));
+            }
+            State::Removing => {
+                debug!(
+                    ?state,
+                    "deployment is in removing state, returning failed result"
+                );
+                return Err(ConnectInnerError::Failed(
+                    "Deployment is in removing state".to_string(),
+                ));
+            }
+        };
+
+        // If no action needed, deployment is already running
+        let Some(action) = action else {
+            debug!(
+                ?state,
+                "deployment is already running or restarting, no action needed"
+            );
+            return Ok(());
+        };
+
+        // Create spinner with 2 steps
+        let mut spinner = self
+            .interaction
+            .start_multi_step_spinner(vec![
+                MultiStepSpinnerStep::new(match action {
+                    StartAction::Start => "Starting deployment...",
+                    StartAction::Unpause => "Unpausing deployment...",
+                }),
+                MultiStepSpinnerStep::new("Waiting for deployment to become healthy..."),
+            ])
+            .map_err(ConnectInnerError::ActualError)?;
+
+        // Step 1: Start or unpause the deployment
+        let step1_result = match action {
+            StartAction::Start => {
+                debug!(?state, "starting deployment before connecting");
+                self.deployment_inspector
+                    .start(&self.deployment_name)
+                    .await
+                    .map_err(|e| ConnectInnerError::ActualError(e.into()))
+            }
+            StartAction::Unpause => {
+                debug!(?state, "unpausing deployment before connecting");
+                self.deployment_inspector
+                    .unpause(&self.deployment_name)
+                    .await
+                    .map_err(|e| ConnectInnerError::ActualError(e.into()))
+            }
+        };
+
+        if let Err(e) = step1_result {
+            let _ = spinner.set_step_outcome(0, MultiStepSpinnerOutcome::Failure);
+            let _ = spinner.set_step_outcome(1, MultiStepSpinnerOutcome::Skipped);
+            return Err(e);
+        }
+
+        debug!("deployment started/unpaused");
+        let _ = spinner.set_step_outcome(0, MultiStepSpinnerOutcome::Success);
+
+        // Step 2: Wait for the deployment to become healthy
+        // Paused deployments always start as unhealthy, so we allow unhealthy initial state
+        let can_start_unhealthy = matches!(action, StartAction::Unpause);
+
+        debug!(can_start_unhealthy, "waiting for healthy deployment");
+
+        let wait_result = self
+            .deployment_inspector
+            .wait_for_healthy_deployment(
+                &self.deployment_name,
+                WatchOptions::builder()
+                    .allow_unhealthy_initial_state(can_start_unhealthy)
+                    .timeout_duration(DEFAULT_WAIT_FOR_HEALTHY_TIMEOUT)
+                    .build(),
+            )
+            .await;
+
+        match wait_result {
+            Ok(()) => {
+                debug!("deployment is healthy");
+                let _ = spinner.set_step_outcome(1, MultiStepSpinnerOutcome::Success);
+                Ok(())
+            }
+            Err(WatchDeploymentError::Timeout { .. }) => {
+                let _ = spinner.set_step_outcome(1, MultiStepSpinnerOutcome::Failure);
+                Err(ConnectInnerError::Failed(
+                    "Waiting for deployment to become healthy timed out".to_string(),
+                ))
+            }
+            Err(WatchDeploymentError::UnhealthyDeployment { .. }) => {
+                let _ = spinner.set_step_outcome(1, MultiStepSpinnerOutcome::Failure);
+                Err(ConnectInnerError::Failed(
+                    "Deployment became unhealthy".to_string(),
+                ))
+            }
+            Err(e) => {
+                let _ = spinner.set_step_outcome(1, MultiStepSpinnerOutcome::Failure);
+                Err(ConnectInnerError::ActualError(anyhow::anyhow!(
+                    "Failed to wait for healthy deployment: {}",
+                    e
+                )))
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum StartAction {
+    Start,
+    Unpause,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::dependencies::mocks::MockDocker;
+    use crate::interaction::MultiStepSpinner;
+    use crate::interaction::mocks::MockInteraction;
     use atlas_local::{
         GetDeploymentError,
+        client::{StartDeploymentError, UnpauseDeploymentError, WatchDeploymentError},
         models::{Deployment as AtlasDeployment, IntoDeploymentError},
     };
     use bollard::errors::Error as BollardError;
+    use bollard::secret::HealthStatusEnum;
     use mockall::mock;
     use semver::Version;
     use std::io;
@@ -194,12 +353,35 @@ mod tests {
         }
     }
 
-    fn create_deployment(name: &str, container_id: &str) -> AtlasDeployment {
+    // Mock for MultiStepSpinner
+    struct MockMultiStepSpinner;
+    impl MultiStepSpinner for MockMultiStepSpinner {
+        fn set_step_outcome(
+            &mut self,
+            _step: usize,
+            _outcome: MultiStepSpinnerOutcome,
+        ) -> Result<()> {
+            Ok(())
+        }
+    }
+
+    fn create_mock_interaction() -> MockInteraction {
+        let mut mock = MockInteraction::new();
+        mock.expect_start_multi_step_spinner()
+            .returning(|_| Ok(Box::new(MockMultiStepSpinner)));
+        mock
+    }
+
+    fn create_deployment_with_state(
+        name: &str,
+        container_id: &str,
+        state: State,
+    ) -> AtlasDeployment {
         AtlasDeployment {
             name: Some(name.to_string()),
             container_id: container_id.to_string(),
             mongodb_version: Version::parse("8.2.2").unwrap(),
-            state: atlas_local::models::State::Running,
+            state,
             port_bindings: None,
             mongodb_type: atlas_local::models::MongodbType::Community,
             creation_source: None,
@@ -215,6 +397,10 @@ mod tests {
             do_not_track: true,
             telemetry_base_url: None,
         }
+    }
+
+    fn create_deployment(name: &str, container_id: &str) -> AtlasDeployment {
+        create_deployment_with_state(name, container_id, State::Running)
     }
 
     #[tokio::test]
@@ -247,6 +433,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors: HashMap::new(),
         };
@@ -304,6 +491,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::Compass,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors,
         };
@@ -361,6 +549,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::Mongosh,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors,
         };
@@ -418,6 +607,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::VsCode,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors,
         };
@@ -453,6 +643,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors: HashMap::new(),
         };
@@ -509,6 +700,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::Compass,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors,
         };
@@ -565,6 +757,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::Mongosh,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors,
         };
@@ -621,6 +814,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::VsCode,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors,
         };
@@ -656,6 +850,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors: HashMap::new(),
         };
@@ -700,6 +895,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors: HashMap::new(),
         };
@@ -739,6 +935,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::Compass,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors: HashMap::new(), // Empty connectors map
         };
@@ -796,6 +993,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::Compass,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors,
         };
@@ -842,6 +1040,7 @@ mod tests {
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
             connector: ConnectWith::Compass,
+            interaction: Box::new(create_mock_interaction()),
             deployment_inspector: Box::new(mock_deployment_management),
             connectors,
         };
@@ -855,6 +1054,530 @@ mod tests {
             result,
             ConnectResult::Success {
                 connection_string: None
+            }
+        );
+    }
+
+    // State-based tests - deployment starting/unpausing
+
+    #[tokio::test]
+    async fn test_connect_from_created_state_starts_deployment() {
+        let deployment_name = "test-deployment".to_string();
+        let container_id = "test-container-id".to_string();
+        let connection_string = "mongodb://localhost:27017".to_string();
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment_name_clone = deployment_name.clone();
+        let deployment_name_for_create = deployment_name.clone();
+        let container_id_for_create = container_id.clone();
+        let container_id_for_connection = container_id.clone();
+        mock_deployment_management
+            .expect_get_deployment()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(move |_| {
+                Ok(create_deployment_with_state(
+                    &deployment_name_for_create,
+                    &container_id_for_create,
+                    State::Created,
+                ))
+            });
+
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_start()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(|_| Ok(()));
+
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_wait_for_healthy_deployment()
+            .withf(move |name, options| {
+                name == &deployment_name_clone && !options.allow_unhealthy_initial_state
+            })
+            .return_once(|_, _| Ok(()));
+
+        let connection_string_clone = connection_string.clone();
+        mock_deployment_management
+            .expect_get_connection_string()
+            .withf(move |id| id == &container_id_for_connection)
+            .return_once(move |_| Ok(connection_string_clone.clone()));
+
+        let mut connect_command = Connect {
+            deployment_name: deployment_name.clone(),
+            connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
+            deployment_inspector: Box::new(mock_deployment_management),
+            connectors: HashMap::new(),
+        };
+
+        let result = connect_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            ConnectResult::Success {
+                connection_string: Some(connection_string)
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_connect_from_exited_state_starts_deployment() {
+        let deployment_name = "test-deployment".to_string();
+        let container_id = "test-container-id".to_string();
+        let connection_string = "mongodb://localhost:27017".to_string();
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment_name_clone = deployment_name.clone();
+        let deployment_name_for_create = deployment_name.clone();
+        let container_id_for_create = container_id.clone();
+        let container_id_for_connection = container_id.clone();
+        mock_deployment_management
+            .expect_get_deployment()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(move |_| {
+                Ok(create_deployment_with_state(
+                    &deployment_name_for_create,
+                    &container_id_for_create,
+                    State::Exited,
+                ))
+            });
+
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_start()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(|_| Ok(()));
+
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_wait_for_healthy_deployment()
+            .withf(move |name, options| {
+                name == &deployment_name_clone && !options.allow_unhealthy_initial_state
+            })
+            .return_once(|_, _| Ok(()));
+
+        let connection_string_clone = connection_string.clone();
+        mock_deployment_management
+            .expect_get_connection_string()
+            .withf(move |id| id == &container_id_for_connection)
+            .return_once(move |_| Ok(connection_string_clone.clone()));
+
+        let mut connect_command = Connect {
+            deployment_name: deployment_name.clone(),
+            connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
+            deployment_inspector: Box::new(mock_deployment_management),
+            connectors: HashMap::new(),
+        };
+
+        let result = connect_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            ConnectResult::Success {
+                connection_string: Some(connection_string)
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_connect_from_paused_state_unpauses_deployment() {
+        let deployment_name = "test-deployment".to_string();
+        let container_id = "test-container-id".to_string();
+        let connection_string = "mongodb://localhost:27017".to_string();
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment_name_clone = deployment_name.clone();
+        let deployment_name_for_create = deployment_name.clone();
+        let container_id_for_create = container_id.clone();
+        let container_id_for_connection = container_id.clone();
+        mock_deployment_management
+            .expect_get_deployment()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(move |_| {
+                Ok(create_deployment_with_state(
+                    &deployment_name_for_create,
+                    &container_id_for_create,
+                    State::Paused,
+                ))
+            });
+
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_unpause()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(|_| Ok(()));
+
+        // Paused deployments allow unhealthy initial state
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_wait_for_healthy_deployment()
+            .withf(move |name, options| {
+                name == &deployment_name_clone && options.allow_unhealthy_initial_state
+            })
+            .return_once(|_, _| Ok(()));
+
+        let connection_string_clone = connection_string.clone();
+        mock_deployment_management
+            .expect_get_connection_string()
+            .withf(move |id| id == &container_id_for_connection)
+            .return_once(move |_| Ok(connection_string_clone.clone()));
+
+        let mut connect_command = Connect {
+            deployment_name: deployment_name.clone(),
+            connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
+            deployment_inspector: Box::new(mock_deployment_management),
+            connectors: HashMap::new(),
+        };
+
+        let result = connect_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            ConnectResult::Success {
+                connection_string: Some(connection_string)
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_connect_from_restarting_state_succeeds() {
+        let deployment_name = "test-deployment".to_string();
+        let container_id = "test-container-id".to_string();
+        let connection_string = "mongodb://localhost:27017".to_string();
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment_name_clone = deployment_name.clone();
+        let deployment_name_for_create = deployment_name.clone();
+        let container_id_for_create = container_id.clone();
+        let container_id_for_connection = container_id.clone();
+        mock_deployment_management
+            .expect_get_deployment()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(move |_| {
+                Ok(create_deployment_with_state(
+                    &deployment_name_for_create,
+                    &container_id_for_create,
+                    State::Restarting,
+                ))
+            });
+
+        let connection_string_clone = connection_string.clone();
+        mock_deployment_management
+            .expect_get_connection_string()
+            .withf(move |id| id == &container_id_for_connection)
+            .return_once(move |_| Ok(connection_string_clone.clone()));
+
+        let mut connect_command = Connect {
+            deployment_name: deployment_name.clone(),
+            connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
+            deployment_inspector: Box::new(mock_deployment_management),
+            connectors: HashMap::new(),
+        };
+
+        let result = connect_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            ConnectResult::Success {
+                connection_string: Some(connection_string)
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_connect_from_dead_state_fails() {
+        let deployment_name = "test-deployment".to_string();
+        let container_id = "test-container-id".to_string();
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment_name_clone = deployment_name.clone();
+        let deployment_name_for_create = deployment_name.clone();
+        let container_id_for_create = container_id.clone();
+        mock_deployment_management
+            .expect_get_deployment()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(move |_| {
+                Ok(create_deployment_with_state(
+                    &deployment_name_for_create,
+                    &container_id_for_create,
+                    State::Dead,
+                ))
+            });
+
+        let mut connect_command = Connect {
+            deployment_name: deployment_name.clone(),
+            connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
+            deployment_inspector: Box::new(mock_deployment_management),
+            connectors: HashMap::new(),
+        };
+
+        let result = connect_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            ConnectResult::Failed {
+                error: "Deployment is dead".to_string()
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_connect_from_removing_state_fails() {
+        let deployment_name = "test-deployment".to_string();
+        let container_id = "test-container-id".to_string();
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment_name_clone = deployment_name.clone();
+        let deployment_name_for_create = deployment_name.clone();
+        let container_id_for_create = container_id.clone();
+        mock_deployment_management
+            .expect_get_deployment()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(move |_| {
+                Ok(create_deployment_with_state(
+                    &deployment_name_for_create,
+                    &container_id_for_create,
+                    State::Removing,
+                ))
+            });
+
+        let mut connect_command = Connect {
+            deployment_name: deployment_name.clone(),
+            connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
+            deployment_inspector: Box::new(mock_deployment_management),
+            connectors: HashMap::new(),
+        };
+
+        let result = connect_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            ConnectResult::Failed {
+                error: "Deployment is in removing state".to_string()
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_connect_start_error() {
+        let deployment_name = "test-deployment".to_string();
+        let container_id = "test-container-id".to_string();
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment_name_clone = deployment_name.clone();
+        let deployment_name_for_create = deployment_name.clone();
+        let container_id_for_create = container_id.clone();
+        mock_deployment_management
+            .expect_get_deployment()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(move |_| {
+                Ok(create_deployment_with_state(
+                    &deployment_name_for_create,
+                    &container_id_for_create,
+                    State::Created,
+                ))
+            });
+
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_start()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(|_| {
+                Err(StartDeploymentError::ContainerStart(
+                    "failed to start".to_string(),
+                ))
+            });
+
+        let mut connect_command = Connect {
+            deployment_name: deployment_name.clone(),
+            connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
+            deployment_inspector: Box::new(mock_deployment_management),
+            connectors: HashMap::new(),
+        };
+
+        let result = connect_command.execute().await;
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_connect_unpause_error() {
+        let deployment_name = "test-deployment".to_string();
+        let container_id = "test-container-id".to_string();
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment_name_clone = deployment_name.clone();
+        let deployment_name_for_create = deployment_name.clone();
+        let container_id_for_create = container_id.clone();
+        mock_deployment_management
+            .expect_get_deployment()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(move |_| {
+                Ok(create_deployment_with_state(
+                    &deployment_name_for_create,
+                    &container_id_for_create,
+                    State::Paused,
+                ))
+            });
+
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_unpause()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(|_| {
+                Err(UnpauseDeploymentError::ContainerUnpause(
+                    "failed to unpause".to_string(),
+                ))
+            });
+
+        let mut connect_command = Connect {
+            deployment_name: deployment_name.clone(),
+            connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
+            deployment_inspector: Box::new(mock_deployment_management),
+            connectors: HashMap::new(),
+        };
+
+        let result = connect_command.execute().await;
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_connect_wait_for_healthy_timeout() {
+        let deployment_name = "test-deployment".to_string();
+        let container_id = "test-container-id".to_string();
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment_name_clone = deployment_name.clone();
+        let deployment_name_for_create = deployment_name.clone();
+        let container_id_for_create = container_id.clone();
+        mock_deployment_management
+            .expect_get_deployment()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(move |_| {
+                Ok(create_deployment_with_state(
+                    &deployment_name_for_create,
+                    &container_id_for_create,
+                    State::Created,
+                ))
+            });
+
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_start()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(|_| Ok(()));
+
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_wait_for_healthy_deployment()
+            .withf(move |name, _options| name == &deployment_name_clone)
+            .return_once(|name, _| {
+                Err(WatchDeploymentError::Timeout {
+                    deployment_name: name.to_string(),
+                })
+            });
+
+        let mut connect_command = Connect {
+            deployment_name: deployment_name.clone(),
+            connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
+            deployment_inspector: Box::new(mock_deployment_management),
+            connectors: HashMap::new(),
+        };
+
+        let result = connect_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            ConnectResult::Failed {
+                error: "Waiting for deployment to become healthy timed out".to_string()
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_connect_wait_for_healthy_unhealthy() {
+        let deployment_name = "test-deployment".to_string();
+        let container_id = "test-container-id".to_string();
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment_name_clone = deployment_name.clone();
+        let deployment_name_for_create = deployment_name.clone();
+        let container_id_for_create = container_id.clone();
+        mock_deployment_management
+            .expect_get_deployment()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(move |_| {
+                Ok(create_deployment_with_state(
+                    &deployment_name_for_create,
+                    &container_id_for_create,
+                    State::Created,
+                ))
+            });
+
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_start()
+            .withf(move |name| name == &deployment_name_clone)
+            .return_once(|_| Ok(()));
+
+        let deployment_name_clone = deployment_name.clone();
+        mock_deployment_management
+            .expect_wait_for_healthy_deployment()
+            .withf(move |name, _options| name == &deployment_name_clone)
+            .return_once(|name, _| {
+                Err(WatchDeploymentError::UnhealthyDeployment {
+                    deployment_name: name.to_string(),
+                    status: HealthStatusEnum::UNHEALTHY,
+                })
+            });
+
+        let mut connect_command = Connect {
+            deployment_name: deployment_name.clone(),
+            connector: ConnectWith::ConnectionString,
+            interaction: Box::new(create_mock_interaction()),
+            deployment_inspector: Box::new(mock_deployment_management),
+            connectors: HashMap::new(),
+        };
+
+        let result = connect_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            ConnectResult::Failed {
+                error: "Deployment became unhealthy".to_string()
             }
         );
     }
