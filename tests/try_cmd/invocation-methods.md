@@ -14,13 +14,14 @@ Manage local deployments
 Usage: atlas-local <COMMAND>
 
 Commands:
-  delete  Delete a deployment
-  list    List all local deployments
-  logs    Get deployment logs
-  setup   Create a local deployment
-  start   Start a deployment
-  stop    Stop (pause) a deployment
-  help    Print this message or the help of the given subcommand(s)
+  delete   Delete a deployment
+  list     List all local deployments
+  logs     Get deployment logs
+  setup    Create a local deployment
+  start    Start a deployment
+  stop     Stop (pause) a deployment
+  connect  Connect to a deployment
+  help     Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help
@@ -39,13 +40,14 @@ The local plugin subcommand This is the root subcommand when executing the execu
 Usage: atlas local <COMMAND>
 
 Commands:
-  delete  Delete a deployment
-  list    List all local deployments
-  logs    Get deployment logs
-  setup   Create a local deployment
-  start   Start a deployment
-  stop    Stop (pause) a deployment
-  help    Print this message or the help of the given subcommand(s)
+  delete   Delete a deployment
+  list     List all local deployments
+  logs     Get deployment logs
+  setup    Create a local deployment
+  start    Start a deployment
+  stop     Stop (pause) a deployment
+  connect  Connect to a deployment
+  help     Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help  Print help
