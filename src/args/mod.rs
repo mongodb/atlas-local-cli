@@ -8,7 +8,7 @@
 use std::{path::PathBuf, time::Duration};
 
 use atlas_local::models::MongoDBVersion;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 
 mod cli;
 
@@ -22,6 +22,7 @@ pub use cli::{Cli, GlobalArgs};
 #[command(about = "Manage local deployments")]
 pub enum LocalArgs {
     Setup(Setup),
+    Connect(Connect),
     #[command(alias = "ls")]
     List(List),
     Start(Start),
@@ -148,6 +149,12 @@ pub struct Setup {
     /// The default is false.
     #[arg(long, default_value = "false")]
     pub skip_pull_image: bool,
+
+    /// Method for connecting to the deployment after setup.
+    ///
+    /// If not provided, the user will be prompted to select a connection method.
+    #[arg(long)]
+    pub connect_with: Option<ConnectWith>,
 }
 
 /// Stop (pause) a deployment.
@@ -156,6 +163,30 @@ pub struct Stop {
     /// Name of the deployment to stop.
     #[arg(index = 1)]
     pub deployment_name: String,
+}
+
+/// Connect to a deployment.
+#[derive(Parser)]
+pub struct Connect {
+    /// Name of the deployment that you want to connect to.
+    #[arg(index = 1)]
+    pub deployment_name: String,
+
+    /// Method for connecting to the deployment.
+    #[arg(long)]
+    pub connector: ConnectWith,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, ValueEnum)]
+pub enum ConnectWith {
+    #[value(name = "compass")]
+    Compass,
+    #[value(name = "mongosh")]
+    Mongosh,
+    #[value(name = "vscode")]
+    VsCode,
+    #[value(name = "connectionString")]
+    ConnectionString,
 }
 
 fn parse_duration(s: &str) -> Result<Duration, String> {
