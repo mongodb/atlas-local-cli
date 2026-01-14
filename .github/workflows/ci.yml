@@ -18,7 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    
+
+    - name: Install libdbus-1-dev
+      run: |
+        apt-get update
+        apt-get install -y libdbus-1-dev
+
     - name: Install Rust toolchain
       run: |
         rustup update stable
