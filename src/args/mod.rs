@@ -12,7 +12,7 @@ use clap::{Parser, Subcommand};
 
 mod cli;
 
-pub use cli::Cli;
+pub use cli::{Cli, GlobalArgs};
 
 /// Root command enum for local deployment management.
 ///
@@ -21,16 +21,16 @@ pub use cli::Cli;
 #[derive(Subcommand)]
 #[command(about = "Manage local deployments")]
 pub enum LocalArgs {
-    #[command(alias = "rm")]
-    Delete(Delete),
+    Setup(Setup),
     #[command(alias = "ls")]
     List(List),
-    #[command(alias = "log")]
-    Logs(Logs),
-    Setup(Setup),
     Start(Start),
     #[command(alias = "pause")]
     Stop(Stop),
+    #[command(alias = "log")]
+    Logs(Logs),
+    #[command(alias = "rm")]
+    Delete(Delete),
 }
 
 /// List all local deployments.
