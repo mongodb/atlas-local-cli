@@ -107,7 +107,9 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
+    # If the operating system is Ubuntu, install libdbus-1-dev
     - name: Install libdbus-1-dev
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         sudo apt-get update
         sudo apt-get install -y libdbus-1-dev
