@@ -25,3 +25,6 @@ install-path = "CARGO_HOME"
 install-updater = false
 # Whether to use cargo-cyclonedx to generate an SBOM
 cargo-cyclonedx = true
+
+[dist.dependencies.apt]
+libdbus-1-dev = '*'

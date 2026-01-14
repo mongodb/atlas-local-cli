@@ -8,14 +8,19 @@ use std::env::args;
 
 use clap::{Args, Subcommand};
 
+use crate::formatting::Format;
+
 use super::LocalArgs;
 
 /// Manage local deployments
 #[derive(Args)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
+    #[command(flatten)]
+    pub global_args: GlobalArgs,
+
     #[command(subcommand)]
-    command: PluginSubCommands,
+    pub command: PluginSubCommands,
 }
 
 /// Implement the Parser trait to allow us to use the Cli struct as a root command.
@@ -64,6 +69,32 @@ impl clap::CommandFactory for Cli {
     }
 }
 
+#[derive(Args)]
+pub struct GlobalArgs {
+    /// Enable debug logging.
+    ///
+    /// Setting this flag will set the log level to debug and only show logs from this crate.
+    ///
+    /// The log level can also be overridden by setting the `ATLAS_LOCAL_LOG` environment variable.
+    /// If the `ATLAS_LOCAL_LOG_ALL` environment variable is set, it will show logs from all crates at the specified level.
+    ///
+    /// The log level can also be overridden by setting the `ATLAS_LOCAL_LOG_ALL` environment variable.
+    /// If the `ATLAS_LOCAL_LOG_ALL` environment variable is set, it will show logs from all crates at the specified level.
+    ///
+    /// The log level can also be overridden by setting the `ATLAS_LOCAL_LOG_ALL` environment variable.
+    #[arg(global = true, hide = true, long, short = 'D', default_value = "false")]
+    pub debug: bool,
+
+    /// Output format.
+    #[arg(global = true, long = "output", short = 'o')]
+    pub format: Option<Format>,
+
+    /// Name of the profile to use from your configuration file.
+    /// To learn about profiles for the Atlas CLI, see https://dochub.mongodb.org/core/atlas-cli-save-connection-settings.
+    #[arg(global = true, long, short = 'P')]
+    pub profile: Option<String>,
+}
+
 /// Enum representing the different ways the CLI can be invoked.
 ///
 /// This enum handles the dual nature of the CLI: it can be run as a plugin (`atlas local`)
@@ -87,9 +118,9 @@ pub enum PluginSubCommands {
 ///
 /// This allows us to transparently execute the command as a plugin or directly.
 /// The conversion extracts the actual command from the plugin wrapper if needed.
-impl From<Cli> for LocalArgs {
-    fn from(cli: Cli) -> Self {
-        match cli.command {
+impl From<PluginSubCommands> for LocalArgs {
+    fn from(command: PluginSubCommands) -> Self {
+        match command {
             PluginSubCommands::Local { command } => command,
             PluginSubCommands::Flat(command) => command,
         }

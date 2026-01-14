@@ -18,7 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    
+
+    - name: Install libdbus-1-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libdbus-1-dev
+
     - name: Install Rust toolchain
       run: |
         rustup update stable
@@ -102,6 +107,13 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
+    # If the operating system is Ubuntu, install libdbus-1-dev
+    - name: Install libdbus-1-dev
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libdbus-1-dev
+
     - name: Install Rust toolchain
       run: |
         rustup update ${{ matrix.rust }}
@@ -148,6 +160,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
+
+    - name: Install libdbus-1-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libdbus-1-dev
     
     - name: Install Rust 1.89
       run: |
@@ -174,7 +191,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y curl gcc
+          apt-get install -y curl gcc libdbus-1-dev
       
       - name: Install Atlas CLI
         run: |
