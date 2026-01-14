@@ -86,7 +86,7 @@ pub struct GlobalArgs {
     pub debug: bool,
 
     /// Output format.
-    #[arg(global = true, long, short = 'o')]
+    #[arg(global = true, long = "output", short = 'o')]
     pub format: Option<Format>,
 
     /// Name of the profile to use from your configuration file.

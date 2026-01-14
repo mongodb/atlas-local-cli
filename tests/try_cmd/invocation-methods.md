@@ -23,7 +23,7 @@ Commands:
   help    Print this message or the help of the given subcommand(s)
 
 Options:
-  -o, --format <FORMAT>    Output format [possible values: text, json]
+  -o, --output <FORMAT>    Output format [possible values: text, json]
   -P, --profile <PROFILE>  Name of the profile to use from your configuration file. To learn about profiles for the Atlas CLI, see https://dochub.mongodb.org/core/atlas-cli-save-connection-settings
   -h, --help               Print help
   -V, --version            Print version
@@ -50,7 +50,7 @@ Commands:
   help    Print this message or the help of the given subcommand(s)
 
 Options:
-  -o, --format <FORMAT>    Output format [possible values: text, json]
+  -o, --output <FORMAT>    Output format [possible values: text, json]
   -P, --profile <PROFILE>  Name of the profile to use from your configuration file. To learn about profiles for the Atlas CLI, see https://dochub.mongodb.org/core/atlas-cli-save-connection-settings
   -h, --help               Print help
 
