@@ -5,11 +5,16 @@ use anyhow::Result;
 
 use crate::{
     args::LocalArgs,
-    commands::{delete::Delete, list::List, logs::Logs, setup::Setup, start::Start, stop::Stop},
+    commands::{
+        connect::Connect, delete::Delete, list::List, logs::Logs, setup::Setup, start::Start,
+        stop::Stop,
+    },
     formatting::Format,
 };
 pub use core::{Command, CommandWithOutput, CommandWithOutputExt};
 
+pub mod connect;
+mod connectors;
 mod core;
 pub mod delete;
 pub mod list;
@@ -35,5 +40,8 @@ pub fn command_from_args(args: LocalArgs, format: Format) -> Result<Box<dyn Comm
         LocalArgs::Setup(setup_args) => Setup::try_from(setup_args)?.with_print_to_stdout(format),
         LocalArgs::Start(start_args) => Start::try_from(start_args)?.with_print_to_stdout(format),
         LocalArgs::Stop(stop_args) => Stop::try_from(stop_args)?.with_print_to_stdout(format),
+        LocalArgs::Connect(connect_args) => {
+            Connect::try_from(connect_args)?.with_print_to_stdout(format)
+        }
     }
 }

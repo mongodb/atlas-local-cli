@@ -1,4 +1,4 @@
-use std::{fmt::Display, path::PathBuf};
+use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
@@ -15,9 +15,13 @@ use serde::Serialize;
 use tracing::debug;
 
 use crate::{
-    args,
-    commands::{CommandWithOutput, validators},
-    dependencies::DeploymentCreator,
+    args::{self, ConnectWith},
+    commands::{
+        CommandWithOutput,
+        connectors::{Compass, Connector, DeploymentParams, Mongosh, VsCode},
+        validators,
+    },
+    dependencies::{DeploymentCreator, DeploymentGetConnectionString},
     interaction::{
         InputPrompt, InputPromptOptions, InputPromptResult, InputPromptValidator, InputValidator,
         Interaction, MultiStepSpinnerInteraction, MultiStepSpinnerOutcome, MultiStepSpinnerStep,
@@ -26,15 +30,18 @@ use crate::{
 };
 
 // Setup dependencies for the setup command
-pub trait SetupDeploymentManagement: DeploymentCreator {}
-impl<T: DeploymentCreator> SetupDeploymentManagement for T {}
+pub trait SetupDeploymentManagement:
+    DeploymentCreator + DeploymentGetConnectionString + Sync
+{
+}
+impl<T: DeploymentCreator + DeploymentGetConnectionString + Sync> SetupDeploymentManagement for T {}
 
 // Interaction dependencies for the setup command
 pub trait SetupInteraction:
-    SpinnerInteraction + SelectPrompt + InputPrompt + MultiStepSpinnerInteraction
+    SpinnerInteraction + SelectPrompt + InputPrompt + MultiStepSpinnerInteraction + Sync
 {
 }
-impl<T: SpinnerInteraction + SelectPrompt + InputPrompt + MultiStepSpinnerInteraction>
+impl<T: SpinnerInteraction + SelectPrompt + InputPrompt + MultiStepSpinnerInteraction + Sync>
     SetupInteraction for T
 {
 }
@@ -52,9 +59,11 @@ pub struct Setup {
 
     image: Option<String>,
     skip_pull_image: bool,
+    connect_with: Option<ConnectWith>,
 
     interaction: Box<dyn SetupInteraction + Send>,
     deployment_management: Box<dyn SetupDeploymentManagement + Send>,
+    connectors: HashMap<ConnectWith, Box<dyn Connector + Send + Sync>>,
 }
 
 impl TryFrom<args::Setup> for Setup {
@@ -73,11 +82,20 @@ impl TryFrom<args::Setup> for Setup {
             password: args.password,
             image: args.image,
             skip_pull_image: args.skip_pull_image,
+            connect_with: args.connect_with,
 
             interaction: Box::new(Interaction::new()),
             deployment_management: Box::new(Client::new(
                 Docker::connect_with_defaults().context("connecting to Docker")?,
             )),
+            connectors: HashMap::from([
+                (
+                    ConnectWith::Compass,
+                    Box::new(Compass::new()) as Box<dyn Connector + Send + Sync>,
+                ),
+                (ConnectWith::Mongosh, Box::new(Mongosh::new())),
+                (ConnectWith::VsCode, Box::new(VsCode::new())),
+            ]),
         })
     }
 }
@@ -90,11 +108,22 @@ pub enum SetupResult {
         mongodb_version: Version,
         port: u16,
         load_sample_data: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        connect_result: Option<ConnectResult>,
     },
     Failed {
         deployment_name: Option<String>,
         error: String,
     },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "connect_outcome", rename_all = "snake_case")]
+pub enum ConnectResult {
+    Connected { method: String },
+    ConnectionString { connection_string: String },
+    Skipped,
+    Failed { error: String },
 }
 
 impl Display for SetupResult {
@@ -105,11 +134,30 @@ impl Display for SetupResult {
                 mongodb_version,
                 port,
                 load_sample_data,
+                connect_result,
             } => {
                 writeln!(f, "Successfully setup deployment '{deployment_name}'")?;
                 writeln!(f, "MongoDB version: {mongodb_version}")?;
                 writeln!(f, "Port: {port}")?;
-                write!(f, "Load sample data: {load_sample_data}")?;
+                writeln!(f, "Load sample data: {load_sample_data}")?;
+
+                // Display connection result if present
+                if let Some(connect_result) = connect_result {
+                    match connect_result {
+                        ConnectResult::Connected { method } => {
+                            write!(f, "Connected via: {method}")?;
+                        }
+                        ConnectResult::ConnectionString { connection_string } => {
+                            write!(f, "Connection string: {connection_string}")?;
+                        }
+                        ConnectResult::Skipped => {
+                            write!(f, "Connection: skipped")?;
+                        }
+                        ConnectResult::Failed { error } => {
+                            write!(f, "Connection failed: {error}")?;
+                        }
+                    }
+                }
                 Ok(())
             }
             Self::Failed {
@@ -225,16 +273,29 @@ impl CommandWithOutput for Setup {
             .wait_for_deployment_outcome()
             .await
         {
-            Ok(deployment) => Ok(SetupResult::Setup {
-                deployment_name: deployment.name.unwrap_or("unknown".to_string()),
-                mongodb_version: deployment.mongodb_version,
-                port: deployment
+            Ok(deployment) => {
+                let deployment_name = deployment.name.clone().unwrap_or("unknown".to_string());
+                let mongodb_version = deployment.mongodb_version.clone();
+                let port = deployment
                     .port_bindings
                     .as_ref()
                     .and_then(|bindings| bindings.port)
-                    .unwrap_or(0),
-                load_sample_data: deployment.mongodb_load_sample_data.unwrap_or(false),
-            }),
+                    .unwrap_or(0);
+                let load_sample_data = deployment.mongodb_load_sample_data.unwrap_or(false);
+
+                // Prompt for connection method and connect if requested
+                let connect_result = self
+                    .prompt_and_connect(&deployment.container_id, &deployment_name)
+                    .await?;
+
+                Ok(SetupResult::Setup {
+                    deployment_name,
+                    mongodb_version,
+                    port,
+                    load_sample_data,
+                    connect_result,
+                })
+            }
             Err(CreateDeploymentError::ReceiveDeployment(error)) => {
                 Err(error).context("receiving deployment outcome")
             }
@@ -444,6 +505,119 @@ impl Setup {
 
         Ok(PromptCustomSettingsResult::Continue)
     }
+
+    /// Prompt for connection method and connect to the deployment
+    async fn prompt_and_connect(
+        &self,
+        container_id: &str,
+        deployment_name: &str,
+    ) -> Result<Option<ConnectResult>> {
+        // Determine which connection method to use
+        let connect_with = if let Some(connect_with) = &self.connect_with {
+            // If connect_with was provided via CLI, use it directly
+            Some(*connect_with)
+        } else if self.force {
+            // If force flag is set and no connect_with provided, skip connection
+            None
+        } else {
+            // Prompt the user to select a connection method
+            self.prompt_connection_method()?
+        };
+
+        // If no connection method selected (user chose skip or force mode), return None
+        let Some(connect_with) = connect_with else {
+            return Ok(Some(ConnectResult::Skipped));
+        };
+
+        // Get the connection string
+        let connection_string = self
+            .deployment_management
+            .get_connection_string(container_id.to_string())
+            .await
+            .context("getting connection string")?;
+
+        // If the connector is ConnectionString, return the connection string
+        if connect_with == ConnectWith::ConnectionString {
+            return Ok(Some(ConnectResult::ConnectionString { connection_string }));
+        }
+
+        // Get the connector
+        let connector = self
+            .connectors
+            .get(&connect_with)
+            .context("Connector not found")?;
+
+        // Check if the connector is available
+        if !connector.is_available().await {
+            let connector_name = match connect_with {
+                ConnectWith::Compass => "Compass",
+                ConnectWith::Mongosh => "mongosh",
+                ConnectWith::VsCode => "VS Code",
+                ConnectWith::ConnectionString => unreachable!(),
+            };
+            return Ok(Some(ConnectResult::Failed {
+                error: format!("{} is not installed", connector_name),
+            }));
+        }
+
+        // Launch the connector
+        connector
+            .launch(&DeploymentParams::new(deployment_name, &connection_string))
+            .await
+            .context("launching connector")?;
+
+        let method = match connect_with {
+            ConnectWith::Compass => "Compass",
+            ConnectWith::Mongosh => "mongosh",
+            ConnectWith::VsCode => "VS Code",
+            ConnectWith::ConnectionString => unreachable!(),
+        };
+
+        Ok(Some(ConnectResult::Connected {
+            method: method.to_string(),
+        }))
+    }
+
+    /// Prompt the user to select a connection method
+    fn prompt_connection_method(&self) -> Result<Option<ConnectWith>> {
+        let select_options = SelectPromptOptions::builder()
+            .message("How do you want to connect to your local Atlas deployment?")
+            .options(vec![
+                CONNECT_WITH_COMPASS,
+                CONNECT_WITH_MONGOSH,
+                CONNECT_WITH_VSCODE,
+                CONNECT_WITH_CONNECTION_STRING,
+                CONNECT_WITH_SKIP,
+            ])
+            .build();
+
+        match self
+            .interaction
+            .select(select_options)
+            .context("failed to prompt for connection method")?
+        {
+            SelectPromptResult::Selected(value) if value == CONNECT_WITH_COMPASS => {
+                debug!("User selected Compass");
+                Ok(Some(ConnectWith::Compass))
+            }
+            SelectPromptResult::Selected(value) if value == CONNECT_WITH_MONGOSH => {
+                debug!("User selected mongosh");
+                Ok(Some(ConnectWith::Mongosh))
+            }
+            SelectPromptResult::Selected(value) if value == CONNECT_WITH_VSCODE => {
+                debug!("User selected VS Code");
+                Ok(Some(ConnectWith::VsCode))
+            }
+            SelectPromptResult::Selected(value) if value == CONNECT_WITH_CONNECTION_STRING => {
+                debug!("User selected connection string");
+                Ok(Some(ConnectWith::ConnectionString))
+            }
+            SelectPromptResult::Selected(_) | SelectPromptResult::Canceled => {
+                debug!("User skipped connection");
+                Ok(None)
+            }
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -455,6 +629,12 @@ enum PromptCustomSettingsResult {
 const SETUP_TYPE_DEFAULT: &str = "With default settings";
 const SETUP_TYPE_CUSTOM: &str = "With custom settings";
 const SETUP_TYPE_CANCEL: &str = "Cancel setup";
+
+const CONNECT_WITH_COMPASS: &str = "Compass";
+const CONNECT_WITH_MONGOSH: &str = "mongosh";
+const CONNECT_WITH_VSCODE: &str = "VS Code";
+const CONNECT_WITH_CONNECTION_STRING: &str = "Connection string";
+const CONNECT_WITH_SKIP: &str = "Skip";
 
 #[cfg(test)]
 mod tests {
@@ -471,8 +651,19 @@ mod tests {
         },
     };
     use futures_util::FutureExt;
+    use mockall::mock;
     use semver::Version;
     use std::sync::Arc;
+
+    mock! {
+        pub Connector {}
+
+        #[async_trait]
+        impl Connector for Connector {
+            async fn is_available(&self) -> bool;
+            async fn launch(&self, params: &DeploymentParams) -> Result<()>;
+        }
+    }
 
     // ============================================================================
     // Test Helpers
@@ -584,6 +775,39 @@ mod tests {
         interaction: Box<dyn SetupInteraction + Send>,
         deployment_management: Box<dyn SetupDeploymentManagement + Send>,
     ) -> Setup {
+        create_setup_command_with_connectors(
+            deployment_name,
+            mdb_version,
+            port,
+            force,
+            load_sample_data,
+            bind_ip_all,
+            initdb,
+            username,
+            password,
+            None,
+            interaction,
+            deployment_management,
+            HashMap::new(),
+        )
+    }
+
+    /// Creates a Setup command with connectors
+    fn create_setup_command_with_connectors(
+        deployment_name: Option<String>,
+        mdb_version: Option<MongoDBVersion>,
+        port: Option<u16>,
+        force: bool,
+        load_sample_data: Option<bool>,
+        bind_ip_all: bool,
+        initdb: Option<PathBuf>,
+        username: Option<String>,
+        password: Option<String>,
+        connect_with: Option<ConnectWith>,
+        interaction: Box<dyn SetupInteraction + Send>,
+        deployment_management: Box<dyn SetupDeploymentManagement + Send>,
+        connectors: HashMap<ConnectWith, Box<dyn Connector + Send + Sync>>,
+    ) -> Setup {
         Setup {
             deployment_name,
             mdb_version,
@@ -596,8 +820,10 @@ mod tests {
             password,
             image: None,
             skip_pull_image: false,
+            connect_with,
             interaction,
             deployment_management,
+            connectors,
         }
     }
 
@@ -709,6 +935,7 @@ mod tests {
                 mongodb_version: version,
                 port: 27017,
                 load_sample_data: false,
+                connect_result: Some(ConnectResult::Skipped),
             }
         );
         verify_all_steps_succeeded(&outcomes);
@@ -721,11 +948,22 @@ mod tests {
 
         let outcomes = Arc::new(std::sync::Mutex::new(Vec::new()));
         let mut mock_interaction = create_mock_interaction_with_spinner(outcomes.clone());
-        mock_interaction.expect_select().return_once(|_| {
-            Ok(crate::interaction::SelectPromptResult::Selected(
-                SETUP_TYPE_DEFAULT.to_string(),
-            ))
-        });
+        // Two selects: setup type and connection method
+        let select_call_count = std::sync::atomic::AtomicUsize::new(0);
+        mock_interaction
+            .expect_select()
+            .times(2)
+            .returning(move |_| {
+                let count = select_call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                match count {
+                    0 => Ok(crate::interaction::SelectPromptResult::Selected(
+                        SETUP_TYPE_DEFAULT.to_string(),
+                    )),
+                    _ => Ok(crate::interaction::SelectPromptResult::Selected(
+                        CONNECT_WITH_SKIP.to_string(),
+                    )),
+                }
+            });
 
         let mut mock_deployment_management = MockDocker::new();
         let deployment = create_deployment(
@@ -783,6 +1021,7 @@ mod tests {
                 mongodb_version: version,
                 port: 27017,
                 load_sample_data: false,
+                connect_result: Some(ConnectResult::Skipped),
             }
         );
     }
@@ -793,11 +1032,22 @@ mod tests {
         let version = Version::parse("8.0.0").unwrap();
 
         let mut mock_interaction = MockInteraction::new();
-        mock_interaction.expect_select().return_once(|_| {
-            Ok(crate::interaction::SelectPromptResult::Selected(
-                SETUP_TYPE_CUSTOM.to_string(),
-            ))
-        });
+        // Two selects: setup type and connection method
+        let select_call_count = std::sync::atomic::AtomicUsize::new(0);
+        mock_interaction
+            .expect_select()
+            .times(2)
+            .returning(move |_| {
+                let count = select_call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                match count {
+                    0 => Ok(crate::interaction::SelectPromptResult::Selected(
+                        SETUP_TYPE_CUSTOM.to_string(),
+                    )),
+                    _ => Ok(crate::interaction::SelectPromptResult::Selected(
+                        CONNECT_WITH_SKIP.to_string(),
+                    )),
+                }
+            });
 
         mock_interaction
             .expect_input()
@@ -886,6 +1136,7 @@ mod tests {
                 mongodb_version: version,
                 port: 27018,
                 load_sample_data: true,
+                connect_result: Some(ConnectResult::Skipped),
             }
         );
     }
@@ -896,11 +1147,22 @@ mod tests {
         let version = Version::parse("8.1.0").unwrap();
 
         let mut mock_interaction = MockInteraction::new();
-        mock_interaction.expect_select().return_once(|_| {
-            Ok(crate::interaction::SelectPromptResult::Selected(
-                SETUP_TYPE_CUSTOM.to_string(),
-            ))
-        });
+        // Two selects: setup type and connection method
+        let select_call_count = std::sync::atomic::AtomicUsize::new(0);
+        mock_interaction
+            .expect_select()
+            .times(2)
+            .returning(move |_| {
+                let count = select_call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                match count {
+                    0 => Ok(crate::interaction::SelectPromptResult::Selected(
+                        SETUP_TYPE_CUSTOM.to_string(),
+                    )),
+                    _ => Ok(crate::interaction::SelectPromptResult::Selected(
+                        CONNECT_WITH_SKIP.to_string(),
+                    )),
+                }
+            });
 
         mock_interaction
             .expect_input()
@@ -992,6 +1254,7 @@ mod tests {
                 mongodb_version: version,
                 port: 27019,
                 load_sample_data: false,
+                connect_result: Some(ConnectResult::Skipped),
             }
         );
     }
@@ -1002,11 +1265,22 @@ mod tests {
         let version = Version::parse("8.0.0").unwrap();
 
         let mut mock_interaction = MockInteraction::new();
-        mock_interaction.expect_select().return_once(|_| {
-            Ok(crate::interaction::SelectPromptResult::Selected(
-                SETUP_TYPE_CUSTOM.to_string(),
-            ))
-        });
+        // Two selects: setup type and connection method
+        let select_call_count = std::sync::atomic::AtomicUsize::new(0);
+        mock_interaction
+            .expect_select()
+            .times(2)
+            .returning(move |_| {
+                let count = select_call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                match count {
+                    0 => Ok(crate::interaction::SelectPromptResult::Selected(
+                        SETUP_TYPE_CUSTOM.to_string(),
+                    )),
+                    _ => Ok(crate::interaction::SelectPromptResult::Selected(
+                        CONNECT_WITH_SKIP.to_string(),
+                    )),
+                }
+            });
 
         let outcomes = Arc::new(std::sync::Mutex::new(Vec::new()));
         let outcomes_clone = outcomes.clone();
@@ -1075,6 +1349,7 @@ mod tests {
                 mongodb_version: version,
                 port: 27017,
                 load_sample_data: false,
+                connect_result: Some(ConnectResult::Skipped),
             }
         );
     }
@@ -1505,6 +1780,7 @@ mod tests {
                 mongodb_version: version,
                 port: 27017,
                 load_sample_data: false,
+                connect_result: Some(ConnectResult::Skipped),
             }
         );
     }
@@ -1571,6 +1847,7 @@ mod tests {
                 mongodb_version: version,
                 port: 27017,
                 load_sample_data: false,
+                connect_result: Some(ConnectResult::Skipped),
             }
         );
     }
@@ -1636,6 +1913,303 @@ mod tests {
                 mongodb_version: version,
                 port: 27017,
                 load_sample_data: false,
+                connect_result: Some(ConnectResult::Skipped),
+            }
+        );
+    }
+
+    // ============================================================================
+    // Connect After Setup Tests
+    // ============================================================================
+
+    #[tokio::test]
+    async fn test_setup_with_connect_with_connection_string() {
+        let deployment_name = "test-deployment".to_string();
+        let version = Version::parse("8.2.2").unwrap();
+        let connection_string = "mongodb://localhost:27017".to_string();
+
+        let outcomes = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mock_interaction = create_mock_interaction_with_spinner(outcomes.clone());
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment = create_deployment(
+            Some(deployment_name.clone()),
+            version.clone(),
+            Some(27017),
+            Some(false),
+        );
+        let progress = create_successful_progress(deployment);
+        mock_deployment_management
+            .expect_create_deployment()
+            .return_once(move |_| progress);
+
+        let connection_string_clone = connection_string.clone();
+        mock_deployment_management
+            .expect_get_connection_string()
+            .return_once(move |_| Ok(connection_string_clone));
+
+        let mut setup_command = create_setup_command_with_connectors(
+            Some(deployment_name.clone()),
+            Some(MongoDBVersion::MajorMinorPatch(
+                MongoDBVersionMajorMinorPatch {
+                    major: 8,
+                    minor: 2,
+                    patch: 2,
+                },
+            )),
+            Some(27017),
+            true,
+            Some(false),
+            false,
+            None,
+            None,
+            None,
+            Some(ConnectWith::ConnectionString),
+            Box::new(mock_interaction),
+            Box::new(mock_deployment_management),
+            HashMap::new(),
+        );
+
+        let result = setup_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            SetupResult::Setup {
+                deployment_name: deployment_name.clone(),
+                mongodb_version: version,
+                port: 27017,
+                load_sample_data: false,
+                connect_result: Some(ConnectResult::ConnectionString { connection_string }),
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_setup_with_connect_with_compass() {
+        let deployment_name = "test-deployment".to_string();
+        let version = Version::parse("8.2.2").unwrap();
+        let connection_string = "mongodb://localhost:27017".to_string();
+
+        let outcomes = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mock_interaction = create_mock_interaction_with_spinner(outcomes.clone());
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment = create_deployment(
+            Some(deployment_name.clone()),
+            version.clone(),
+            Some(27017),
+            Some(false),
+        );
+        let progress = create_successful_progress(deployment);
+        mock_deployment_management
+            .expect_create_deployment()
+            .return_once(move |_| progress);
+
+        let connection_string_clone = connection_string.clone();
+        mock_deployment_management
+            .expect_get_connection_string()
+            .return_once(move |_| Ok(connection_string_clone));
+
+        let mut mock_connector = MockConnector::new();
+        mock_connector.expect_is_available().returning(|| true);
+        mock_connector.expect_launch().returning(|_| Ok(()));
+
+        let mut connectors: HashMap<ConnectWith, Box<dyn Connector + Send + Sync>> = HashMap::new();
+        connectors.insert(ConnectWith::Compass, Box::new(mock_connector));
+
+        let mut setup_command = create_setup_command_with_connectors(
+            Some(deployment_name.clone()),
+            Some(MongoDBVersion::MajorMinorPatch(
+                MongoDBVersionMajorMinorPatch {
+                    major: 8,
+                    minor: 2,
+                    patch: 2,
+                },
+            )),
+            Some(27017),
+            true,
+            Some(false),
+            false,
+            None,
+            None,
+            None,
+            Some(ConnectWith::Compass),
+            Box::new(mock_interaction),
+            Box::new(mock_deployment_management),
+            connectors,
+        );
+
+        let result = setup_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            SetupResult::Setup {
+                deployment_name: deployment_name.clone(),
+                mongodb_version: version,
+                port: 27017,
+                load_sample_data: false,
+                connect_result: Some(ConnectResult::Connected {
+                    method: "Compass".to_string(),
+                }),
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_setup_with_connect_with_compass_not_installed() {
+        let deployment_name = "test-deployment".to_string();
+        let version = Version::parse("8.2.2").unwrap();
+        let connection_string = "mongodb://localhost:27017".to_string();
+
+        let outcomes = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mock_interaction = create_mock_interaction_with_spinner(outcomes.clone());
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment = create_deployment(
+            Some(deployment_name.clone()),
+            version.clone(),
+            Some(27017),
+            Some(false),
+        );
+        let progress = create_successful_progress(deployment);
+        mock_deployment_management
+            .expect_create_deployment()
+            .return_once(move |_| progress);
+
+        let connection_string_clone = connection_string.clone();
+        mock_deployment_management
+            .expect_get_connection_string()
+            .return_once(move |_| Ok(connection_string_clone));
+
+        let mut mock_connector = MockConnector::new();
+        mock_connector.expect_is_available().returning(|| false);
+
+        let mut connectors: HashMap<ConnectWith, Box<dyn Connector + Send + Sync>> = HashMap::new();
+        connectors.insert(ConnectWith::Compass, Box::new(mock_connector));
+
+        let mut setup_command = create_setup_command_with_connectors(
+            Some(deployment_name.clone()),
+            Some(MongoDBVersion::MajorMinorPatch(
+                MongoDBVersionMajorMinorPatch {
+                    major: 8,
+                    minor: 2,
+                    patch: 2,
+                },
+            )),
+            Some(27017),
+            true,
+            Some(false),
+            false,
+            None,
+            None,
+            None,
+            Some(ConnectWith::Compass),
+            Box::new(mock_interaction),
+            Box::new(mock_deployment_management),
+            connectors,
+        );
+
+        let result = setup_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            SetupResult::Setup {
+                deployment_name: deployment_name.clone(),
+                mongodb_version: version,
+                port: 27017,
+                load_sample_data: false,
+                connect_result: Some(ConnectResult::Failed {
+                    error: "Compass is not installed".to_string(),
+                }),
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_setup_prompts_for_connection_and_selects_connection_string() {
+        let deployment_name = "test-deployment".to_string();
+        let version = Version::parse("8.2.2").unwrap();
+        let connection_string = "mongodb://localhost:27017".to_string();
+
+        let outcomes = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut mock_interaction = create_mock_interaction_with_spinner(outcomes.clone());
+
+        // Two selects: setup type (default) and connection method (connection string)
+        let select_call_count = std::sync::atomic::AtomicUsize::new(0);
+        mock_interaction
+            .expect_select()
+            .times(2)
+            .returning(move |_| {
+                let count = select_call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                match count {
+                    0 => Ok(crate::interaction::SelectPromptResult::Selected(
+                        SETUP_TYPE_DEFAULT.to_string(),
+                    )),
+                    _ => Ok(crate::interaction::SelectPromptResult::Selected(
+                        CONNECT_WITH_CONNECTION_STRING.to_string(),
+                    )),
+                }
+            });
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment = create_deployment(
+            Some(deployment_name.clone()),
+            version.clone(),
+            Some(27017),
+            Some(false),
+        );
+        let progress = create_successful_progress(deployment);
+        mock_deployment_management
+            .expect_create_deployment()
+            .return_once(move |_| progress);
+
+        let connection_string_clone = connection_string.clone();
+        mock_deployment_management
+            .expect_get_connection_string()
+            .return_once(move |_| Ok(connection_string_clone));
+
+        let mut setup_command = create_setup_command(
+            Some(deployment_name.clone()),
+            Some(MongoDBVersion::MajorMinorPatch(
+                MongoDBVersionMajorMinorPatch {
+                    major: 8,
+                    minor: 2,
+                    patch: 2,
+                },
+            )),
+            Some(27017),
+            false,
+            Some(false),
+            false,
+            None,
+            None,
+            None,
+            Box::new(mock_interaction),
+            Box::new(mock_deployment_management),
+        );
+
+        let result = setup_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            SetupResult::Setup {
+                deployment_name: deployment_name.clone(),
+                mongodb_version: version,
+                port: 27017,
+                load_sample_data: false,
+                connect_result: Some(ConnectResult::ConnectionString { connection_string }),
             }
         );
     }
@@ -1687,6 +2261,7 @@ mod tests {
             mongodb_version: Version::parse("8.2.2").unwrap(),
             port: 27017,
             load_sample_data: true,
+            connect_result: None,
         };
         let output = format!("{}", result);
         assert!(
@@ -1750,6 +2325,7 @@ mod tests {
             password: Some("password".to_string()),
             image: Some("test-image".to_string()),
             skip_pull_image: true,
+            connect_with: Some(ConnectWith::Compass),
         };
 
         let result = Setup::try_from(args);
@@ -1766,6 +2342,7 @@ mod tests {
                 assert_eq!(setup.password, Some("password".to_string()));
                 assert_eq!(setup.image, Some("test-image".to_string()));
                 assert_eq!(setup.skip_pull_image, true);
+                assert_eq!(setup.connect_with, Some(ConnectWith::Compass));
             }
             Err(_) => {
                 // Docker might not be available, which is fine for unit tests

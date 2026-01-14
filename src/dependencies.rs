@@ -3,7 +3,7 @@
 //! behind traits, components can be decoupled and dependency-injected, improving testability and maintainability.
 use async_trait::async_trait;
 use atlas_local::{
-    Client, GetDeploymentError, GetLogsError,
+    Client, GetConnectionStringError, GetDeploymentError, GetLogsError,
     client::{
         CreateDeploymentProgress, StartDeploymentError, StopDeploymentError,
         UnpauseDeploymentError, WatchDeploymentError,
@@ -158,6 +158,23 @@ impl DeploymentCreator for Client {
     }
 }
 
+#[async_trait]
+pub trait DeploymentGetConnectionString {
+    async fn get_connection_string(
+        &self,
+        container_id_or_name: String,
+    ) -> Result<String, GetConnectionStringError>;
+}
+
+#[async_trait]
+impl DeploymentGetConnectionString for Client {
+    async fn get_connection_string(
+        &self,
+        container_id_or_name: String,
+    ) -> Result<String, GetConnectionStringError> {
+        self.get_connection_string(container_id_or_name).await
+    }
+}
 #[cfg(test)]
 pub mod mocks {
     use super::*;
@@ -208,6 +225,11 @@ pub mod mocks {
 
         impl DeploymentCreator for Docker {
             fn create_deployment(&self, deployment_options: CreateDeploymentOptions) -> CreateDeploymentProgress;
+        }
+
+        #[async_trait]
+        impl DeploymentGetConnectionString for Docker {
+            async fn get_connection_string(&self, container_id_or_name: String) -> Result<String, GetConnectionStringError>;
         }
     }
 }
