@@ -1,3 +1,19 @@
+## [0.0.3] - 2026-01-14
+
+### 🚀 Features
+
+- Implemented list command ([#13](https://github.com/mongodb/atlas-local-cli/pull/13))
+- Implement delete command for local deployments ([#14](https://github.com/mongodb/atlas-local-cli/pull/14))
+- Added atlas-local log command ([#15](https://github.com/mongodb/atlas-local-cli/pull/15))
+- Added start command ([#19](https://github.com/mongodb/atlas-local-cli/pull/19))
+- Stop command ([#20](https://github.com/mongodb/atlas-local-cli/pull/20))
+- Implemented atlas-local setup ([#21](https://github.com/mongodb/atlas-local-cli/pull/21))
+- Implemented atlas-local connect ([#22](https://github.com/mongodb/atlas-local-cli/pull/22))
+- Add support for --debug and --format ([#23](https://github.com/mongodb/atlas-local-cli/pull/23))
+
+### ⚙️ Miscellaneous Tasks
+
+- Improve dependabot-auto-approve.yml ([#11](https://github.com/mongodb/atlas-local-cli/pull/11))
 ## [0.0.2] - 2025-12-05
 
 ### ⚙️ Miscellaneous Tasks
