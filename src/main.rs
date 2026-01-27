@@ -33,6 +33,7 @@ async fn main() -> Result<()> {
     // Convert the CLI arguments into a command.
     // TODO:Format is hardcoded to text for now, we will make it configurable later.
     let mut root_command = command_from_args(cli_arguments, Format::Text)
+        .await
         .context("converting CLI arguments into a command")?;
 
     // Execute the command.

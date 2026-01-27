@@ -11,13 +11,12 @@ use atlas_local::models::MongoDBVersion;
 use clap::{Parser, Subcommand, ValueEnum};
 
 mod cli;
+pub mod search;
 
 pub use cli::Cli;
+pub use search::{Indexes, Search};
 
-/// Root command enum for local deployment management.
-///
-/// `LocalArgs` is the root command that users will interact with.
-/// It contains all available subcommands for managing local deployments.
+/// Manage local deployments.
 #[derive(Subcommand)]
 #[command(about = "Manage local deployments")]
 pub enum LocalArgs {
@@ -32,6 +31,8 @@ pub enum LocalArgs {
     #[command(alias = "pause")]
     Stop(Stop),
     Connect(Connect),
+    #[command(subcommand)]
+    Search(Search),
 }
 
 /// List all local deployments.
