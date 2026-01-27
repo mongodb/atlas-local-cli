@@ -189,5 +189,15 @@ pub mod mocks {
         impl SearchIndexCreator for MongoDB {
             async fn create_search_index(&self, model: CreateSearchIndexModel) -> Result<String>;
         }
+
+        #[async_trait]
+        impl SearchIndexStatusGetter for MongoDB {
+            async fn get_search_index_status(
+                &self,
+                database_name: String,
+                collection_name: String,
+                index_name: String,
+            ) -> Result<Option<MongoDbSearchIndexStatus>>;
+        }
     }
 }
