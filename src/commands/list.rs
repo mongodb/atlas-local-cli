@@ -12,7 +12,7 @@ use bollard::Docker;
 use serde::Serialize;
 
 use crate::{
-    args, commands::CommandWithOutput, dependencies::DeploymentLister, models::Deployment,
+    args, commands::CommandWithOutput, dependencies::docker::DeploymentLister, models::Deployment,
     table::Table,
 };
 
@@ -103,7 +103,7 @@ mod tests {
     use semver::Version;
 
     use super::*;
-    use crate::dependencies::MockDocker;
+    use crate::dependencies::docker::mocks::MockDocker;
 
     #[tokio::test]
     async fn test_list_command() {

@@ -45,6 +45,7 @@ async fn main() -> Result<()> {
 
     // Convert the CLI arguments into a command.
     let mut root_command = command_from_args(cli_arguments, format)
+        .await
         .context("converting CLI arguments into a command")?;
 
     // Execute the command.

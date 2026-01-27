@@ -21,6 +21,7 @@ Commands:
   stop     Stop (pause) a deployment
   logs     Get deployment logs
   delete   Delete a deployment
+  search   Manage search for local deployments.
   help     Print this message or the help of the given subcommand(s)
 
 Options:
@@ -36,7 +37,6 @@ In plugin mode the usage string in the help text should be: `Usage: atlas local 
 
 ```trycmd
 $ atlas local --help
-...
 The local plugin subcommand This is the root subcommand when executing the executable as a plugin
 
 Usage: atlas local [OPTIONS] <COMMAND>
@@ -49,6 +49,7 @@ Commands:
   stop     Stop (pause) a deployment
   logs     Get deployment logs
   delete   Delete a deployment
+  search   Manage search for local deployments.
   help     Print this message or the help of the given subcommand(s)
 
 Options:

@@ -207,6 +207,8 @@ jobs:
           apt-get install -y mongodb-atlas-cli
           # Print the Atlas CLI version
           atlas --version
+          # Disable secure storage warnings
+          atlas config set silence_storage_warning true
 
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1

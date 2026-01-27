@@ -87,7 +87,7 @@ impl CommandWithOutput for Logs {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dependencies::MockDocker;
+    use crate::dependencies::mocks::MockDocker;
     use atlas_local::models::LogOutput;
     use bytes::Bytes;
 
