@@ -11,6 +11,7 @@ pub enum Search {
 #[command(about = "Manage local search indexes.")]
 pub enum Indexes {
     Create(Create),
+    Describe(Describe),
     #[command(alias = "ls")]
     List(List),
     #[command(alias = "rm")]
@@ -72,6 +73,25 @@ pub struct List {
     /// Name of the collection.
     #[arg(long)]
     pub collection: Option<String>,
+}
+
+/// Describe a search index for the specified deployment.
+#[derive(Args)]
+pub struct Describe {
+    /// ID of the index.
+    #[arg(index = 1)]
+    pub index_id: Option<String>,
+
+    /// Name of the deployment.
+    #[arg(long)]
+    pub deployment_name: String,
+
+    /// Username for authenticating to MongoDB.
+    #[arg(long = "username", requires = "password")]
+    pub username: Option<String>,
+    /// Password for authenticating to MongoDB.
+    #[arg(long = "password", requires = "username")]
+    pub password: Option<String>,
 }
 
 /// Delete the specified search index from the specified deployment.

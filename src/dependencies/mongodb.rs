@@ -48,6 +48,12 @@ pub trait SearchIndexDeleter {
     ) -> Result<()>;
 }
 
+/// Trait for describing (getting) a search index by ID.
+#[async_trait]
+pub trait SearchIndexDescriber {
+    async fn describe_search_index(&self, index_id: String) -> Result<Option<SearchIndex>>;
+}
+
 // Dependency to create search indexes
 #[async_trait]
 pub trait SearchIndexCreator {
@@ -292,6 +298,78 @@ impl SearchIndexDeleter for Client {
     }
 }
 
+#[async_trait]
+impl SearchIndexDescriber for Client {
+    async fn describe_search_index(&self, index_id: String) -> Result<Option<SearchIndex>> {
+        debug!(index_id, "describing search index by ID");
+
+        // Internal struct to deserialize the raw search index document.
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        struct RawSearchIndex {
+            #[serde(rename = "id")]
+            index_id: String,
+            name: String,
+            #[serde(rename = "type")]
+            index_type: Option<String>,
+            status: MongoDbSearchIndexStatus,
+        }
+
+        // We need to iterate through all databases and collections to find the index by ID.
+        // This is because MongoDB doesn't provide a direct "get index by ID" API.
+        let database_names = self
+            .list_database_names()
+            .await
+            .context("listing database names")?;
+
+        for database_name in database_names {
+            // Skip system databases
+            if database_name == "admin" || database_name == "local" || database_name == "config" {
+                continue;
+            }
+
+            let database = self.database(&database_name);
+            let collection_names = database
+                .list_collection_names()
+                .await
+                .context("listing collection names")?;
+
+            for collection_name in collection_names {
+                let collection = database.collection::<()>(&collection_name);
+
+                // Try to list search indexes for this collection
+                let search_indexes = match collection.list_search_indexes().await {
+                    Ok(cursor) => cursor,
+                    Err(_) => continue, // Skip collections that don't support search indexes
+                };
+
+                let raw_indexes = match search_indexes
+                    .with_type::<RawSearchIndex>()
+                    .try_collect::<Vec<_>>()
+                    .await
+                {
+                    Ok(indexes) => indexes,
+                    Err(_) => continue,
+                };
+
+                // Check if any index matches the requested ID
+                if let Some(raw) = raw_indexes.into_iter().find(|idx| idx.index_id == index_id) {
+                    trace!(?raw, "found search index");
+                    return Ok(Some(SearchIndex {
+                        index_id: raw.index_id,
+                        name: raw.name,
+                        database: database_name,
+                        collection_name,
+                        status: raw.status,
+                        index_type: raw.index_type,
+                    }));
+                }
+            }
+        }
+
+        Ok(None)
+    }
+}
+
 #[cfg(test)]
 pub mod mocks {
     use super::*;
@@ -332,6 +410,11 @@ pub mod mocks {
                 collection_name: String,
                 index_name: String,
             ) -> Result<()>;
+        }
+
+        #[async_trait]
+        impl SearchIndexDescriber for MongoDB {
+            async fn describe_search_index(&self, index_id: String) -> Result<Option<SearchIndex>>;
         }
     }
 }
