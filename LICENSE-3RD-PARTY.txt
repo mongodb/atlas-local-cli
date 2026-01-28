@@ -2796,9 +2796,9 @@ OVERVIEW OF LICENSES:
         - anstyle-query 1.1.5 (https://github.com/rust-cli/anstyle.git)
         - anstyle-wincon 3.0.11 (https://github.com/rust-cli/anstyle.git)
         - anstyle 1.0.13 (https://github.com/rust-cli/anstyle.git)
-        - clap 4.5.54 (https://github.com/clap-rs/clap)
-        - clap_builder 4.5.54 (https://github.com/clap-rs/clap)
-        - clap_derive 4.5.49 (https://github.com/clap-rs/clap)
+        - clap 4.5.55 (https://github.com/clap-rs/clap)
+        - clap_builder 4.5.55 (https://github.com/clap-rs/clap)
+        - clap_derive 4.5.55 (https://github.com/clap-rs/clap)
         - clap_lex 0.7.7 (https://github.com/clap-rs/clap)
         - colorchoice 1.0.4 (https://github.com/rust-cli/anstyle.git)
         - config 0.15.19 (https://github.com/rust-cli/config-rs)
@@ -7892,7 +7892,7 @@ THE SOFTWARE.
                         MIT License
         applies to: 
         - winreg 0.50.0 (https://github.com/gentoo90/winreg-rs)
-        - winreg 0.52.0 (https://github.com/gentoo90/winreg-rs)
+        - winreg 0.55.0 (https://github.com/gentoo90/winreg-rs)
 -----------------------------------------------------------------------------
 
 Copyright (c) 2015 Igor Shaula
