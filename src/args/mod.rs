@@ -37,6 +37,7 @@ pub enum LocalArgs {
 
 /// List all local deployments.
 #[derive(Parser)]
+#[command(rename_all = "camelCase")]
 pub struct List;
 
 /// Delete a deployment.
@@ -46,6 +47,7 @@ pub struct List;
 /// Deleting a Local deployment also deletes any local data volumes.
 /// Deleting a deployment will not remove saved connections from MongoDB for VS Code. This must be done manually. To learn more, see https://www.mongodb.com/docs/mongodb-vscode/connect/#remove-a-connection.
 #[derive(Parser)]
+#[command(rename_all = "camelCase")]
 pub struct Delete {
     /// Name of the deployment to delete.
     #[arg(index = 1)]
@@ -58,6 +60,7 @@ pub struct Delete {
 
 /// Get deployment logs.
 #[derive(Parser)]
+#[command(rename_all = "camelCase")]
 pub struct Logs {
     /// Name of the deployment to get logs from.
     #[arg(index = 1)]
@@ -66,6 +69,7 @@ pub struct Logs {
 
 /// Start a deployment.
 #[derive(Parser)]
+#[command(rename_all = "camelCase")]
 pub struct Start {
     /// Name of the deployment to start.
     #[arg(index = 1)]
@@ -86,6 +90,7 @@ pub struct Start {
 ///
 /// To learn more about local atlas deployments, see https://www.mongodb.com/docs/atlas/cli/current/atlas-cli-deploy-local/
 #[derive(Parser)]
+#[command(rename_all = "camelCase")]
 pub struct Setup {
     /// Name of the deployment that you want to set up.
     #[arg(index = 1)]
@@ -160,6 +165,7 @@ pub struct Setup {
 
 /// Stop (pause) a deployment.
 #[derive(Parser)]
+#[command(rename_all = "camelCase")]
 pub struct Stop {
     /// Name of the deployment to stop.
     #[arg(index = 1)]
@@ -168,6 +174,7 @@ pub struct Stop {
 
 /// Connect to a deployment.
 #[derive(Parser)]
+#[command(rename_all = "camelCase")]
 pub struct Connect {
     /// Name of the deployment that you want to connect to.
     #[arg(index = 1)]

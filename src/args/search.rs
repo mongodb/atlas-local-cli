@@ -19,6 +19,7 @@ pub enum Indexes {
 }
 
 #[derive(Args)]
+#[command(rename_all = "camelCase")]
 pub struct Create {
     /// Name of the deployment.
     #[arg(long)]
@@ -55,6 +56,7 @@ pub struct Create {
 
 /// List all Atlas Search indexes for a deployment.
 #[derive(Args)]
+#[command(rename_all = "camelCase")]
 pub struct List {
     /// Name of the deployment.
     #[arg(long)]
@@ -77,6 +79,7 @@ pub struct List {
 
 /// Describe a search index for the specified deployment.
 #[derive(Args)]
+#[command(rename_all = "camelCase")]
 pub struct Describe {
     /// ID of the index.
     #[arg(index = 1)]
@@ -96,6 +99,7 @@ pub struct Describe {
 
 /// Delete the specified search index from the specified deployment.
 #[derive(Args)]
+#[command(rename_all = "camelCase")]
 pub struct Delete {
     /// Name of the index.
     #[arg(index = 1)]
