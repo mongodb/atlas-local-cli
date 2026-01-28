@@ -5,7 +5,7 @@
 
 use std::fmt::Display;
 
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use async_trait::async_trait;
 use mongodb::Client;
 use serde::Serialize;
@@ -17,7 +17,7 @@ use crate::{
         with_mongodb::{TryFromWithMongodbClient, TryToGetMongodbClientError},
     },
     dependencies::{SearchIndex, SearchIndexLister},
-    interaction::{InputPrompt, InputPromptOptions, InputPromptResult, Interaction},
+    interaction::{InputPrompt, Interaction},
     table::Table,
 };
 
@@ -114,8 +114,8 @@ impl CommandWithOutput for List {
     async fn execute(&mut self) -> Result<Self::Output> {
         // Prompt for database name if not provided.
         let database_name = match self
-            .prompt_if_none(&self.database_name.clone(), "Database?")
-            .await
+            .interaction
+            .prompt_if_none(self.database_name.as_deref(), "Database?")
         {
             Ok(name) => name,
             Err(e) => {
@@ -127,8 +127,8 @@ impl CommandWithOutput for List {
 
         // Prompt for collection name if not provided.
         let collection_name = match self
-            .prompt_if_none(&self.collection.clone(), "Collection?")
-            .await
+            .interaction
+            .prompt_if_none(self.collection.as_deref(), "Collection?")
         {
             Ok(name) => name,
             Err(e) => {
@@ -161,30 +161,14 @@ impl CommandWithOutput for List {
     }
 }
 
-impl List {
-    async fn prompt_if_none(&self, field: &Option<String>, prompt: &str) -> Result<String> {
-        match field {
-            Some(value) => Ok(value.clone()),
-            None => {
-                match self.interaction.input(
-                    InputPromptOptions::builder()
-                        .message(prompt.to_string())
-                        .build(),
-                )? {
-                    InputPromptResult::Input(value) => Ok(value),
-                    InputPromptResult::Canceled => Err(anyhow!("user canceled the prompt")),
-                }
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::dependencies::MongoDbSearchIndexStatus;
     use crate::dependencies::mocks::MockMongoDB;
+    use crate::interaction::InputPromptResult;
     use crate::interaction::mocks::MockInteraction;
+    use anyhow::anyhow;
 
     // ============================================================================
     // Test Helpers

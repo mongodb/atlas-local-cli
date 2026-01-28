@@ -5,7 +5,7 @@
 
 use std::fmt::Display;
 
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use async_trait::async_trait;
 use mongodb::Client;
 use serde::Serialize;
@@ -17,7 +17,7 @@ use crate::{
         with_mongodb::{TryFromWithMongodbClient, TryToGetMongodbClientError},
     },
     dependencies::{SearchIndex, SearchIndexDescriber},
-    interaction::{InputPrompt, InputPromptOptions, InputPromptResult, Interaction},
+    interaction::{InputPrompt, Interaction},
     table::Table,
 };
 
@@ -109,8 +109,8 @@ impl CommandWithOutput for Describe {
     async fn execute(&mut self) -> Result<Self::Output> {
         // Prompt for index ID if not provided.
         let index_id = match self
-            .prompt_if_none(&self.index_id.clone(), "Search Index ID?")
-            .await
+            .interaction
+            .prompt_if_none(self.index_id.as_deref(), "Search Index ID?")
         {
             Ok(id) => id,
             Err(e) => {
@@ -143,30 +143,14 @@ impl CommandWithOutput for Describe {
     }
 }
 
-impl Describe {
-    async fn prompt_if_none(&self, field: &Option<String>, prompt: &str) -> Result<String> {
-        match field {
-            Some(value) => Ok(value.clone()),
-            None => {
-                match self.interaction.input(
-                    InputPromptOptions::builder()
-                        .message(prompt.to_string())
-                        .build(),
-                )? {
-                    InputPromptResult::Input(value) => Ok(value),
-                    InputPromptResult::Canceled => Err(anyhow!("user canceled the prompt")),
-                }
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::dependencies::MongoDbSearchIndexStatus;
     use crate::dependencies::mocks::MockMongoDB;
+    use crate::interaction::InputPromptResult;
     use crate::interaction::mocks::MockInteraction;
+    use anyhow::anyhow;
 
     // ============================================================================
     // Test Helpers

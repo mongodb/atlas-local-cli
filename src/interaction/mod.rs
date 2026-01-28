@@ -77,6 +77,23 @@ pub enum InputPromptResult {
 
 pub trait InputPrompt {
     fn input(&self, options: InputPromptOptions) -> Result<InputPromptResult>;
+
+    /// Prompts the user for input if the field is `None`, otherwise returns the existing value.
+    ///
+    /// Returns an error if the user cancels the prompt.
+    fn prompt_if_none(&self, field: Option<&str>, prompt: &str) -> Result<String> {
+        match field {
+            Some(value) => Ok(value.to_string()),
+            None => match self.input(
+                InputPromptOptions::builder()
+                    .message(prompt.to_string())
+                    .build(),
+            )? {
+                InputPromptResult::Input(value) => Ok(value),
+                InputPromptResult::Canceled => Err(anyhow::anyhow!("user canceled the prompt")),
+            },
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, TypedBuilder)]

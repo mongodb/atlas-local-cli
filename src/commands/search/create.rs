@@ -24,9 +24,7 @@ use crate::{
         CreateSearchIndexModel, FileReader, MongoDbSearchIndexStatus, SearchIndexCreator,
         SearchIndexStatusGetter, SearchIndexType, TokioFs,
     },
-    interaction::{
-        InputPrompt, InputPromptOptions, InputPromptResult, Interaction, SpinnerInteraction,
-    },
+    interaction::{InputPrompt, Interaction, SpinnerInteraction},
 };
 
 // Interaction dependencies for the delete command
@@ -258,16 +256,16 @@ impl Create {
     ) -> Result<CreateSearchIndexModel> {
         // Prompt the user for the missing fields if they are not provided.
         let index_name = self
-            .prompt_if_none(&flags.index_name, "Search Index Name?")
-            .await?;
+            .interaction
+            .prompt_if_none(flags.index_name.as_deref(), "Search Index Name?")?;
 
         let database_name = self
-            .prompt_if_none(&flags.database_name, "Database?")
-            .await?;
+            .interaction
+            .prompt_if_none(flags.database_name.as_deref(), "Database?")?;
 
         let collection_name = self
-            .prompt_if_none(&flags.collection, "Collection?")
-            .await?;
+            .interaction
+            .prompt_if_none(flags.collection.as_deref(), "Collection?")?;
 
         let create_search_index_model = CreateSearchIndexModel {
             database_name,
@@ -285,30 +283,14 @@ impl Create {
 
         Ok(create_search_index_model)
     }
-
-    async fn prompt_if_none(&self, field: &Option<String>, prompt: &str) -> Result<String> {
-        match field {
-            Some(value) => Ok(value.clone()),
-            None => {
-                match self.interaction.input(
-                    InputPromptOptions::builder()
-                        .message(prompt.to_string())
-                        .build(),
-                )? {
-                    InputPromptResult::Input(value) => Ok(value),
-                    InputPromptResult::Canceled => Err(anyhow!("user canceled the prompt")),
-                }
-            }
-        }
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::dependencies::mocks::{MockMongoDB, MockTokioFs};
-    use crate::interaction::SpinnerHandle;
     use crate::interaction::mocks::MockInteraction;
+    use crate::interaction::{InputPromptResult, SpinnerHandle};
     use std::path::PathBuf;
     use std::time::Duration;
 

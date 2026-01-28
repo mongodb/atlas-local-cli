@@ -5,7 +5,7 @@
 
 use std::fmt::Display;
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use mongodb::Client;
 use serde::Serialize;
@@ -19,7 +19,7 @@ use crate::{
     dependencies::SearchIndexDeleter,
     interaction::{
         ConfirmationPrompt, ConfirmationPromptOptions, ConfirmationPromptResult, InputPrompt,
-        InputPromptOptions, InputPromptResult, Interaction, SpinnerInteraction,
+        Interaction, SpinnerInteraction,
     },
 };
 
@@ -91,7 +91,10 @@ impl CommandWithOutput for Delete {
 
     async fn execute(&mut self) -> Result<Self::Output> {
         // Prompt for database name if not provided.
-        let database_name = match self.prompt_if_none(&self.database_name.clone(), "Database?") {
+        let database_name = match self
+            .interaction
+            .prompt_if_none(self.database_name.as_deref(), "Database?")
+        {
             Ok(name) => name,
             Err(e) => {
                 return Ok(DeleteResult::Failed {
@@ -101,7 +104,10 @@ impl CommandWithOutput for Delete {
         };
 
         // Prompt for collection name if not provided.
-        let collection_name = match self.prompt_if_none(&self.collection.clone(), "Collection?") {
+        let collection_name = match self
+            .interaction
+            .prompt_if_none(self.collection.as_deref(), "Collection?")
+        {
             Ok(name) => name,
             Err(e) => {
                 return Ok(DeleteResult::Failed {
@@ -111,7 +117,10 @@ impl CommandWithOutput for Delete {
         };
 
         // Prompt for index name if not provided.
-        let index_name = match self.prompt_if_none(&self.index_name.clone(), "Search Index Name?") {
+        let index_name = match self
+            .interaction
+            .prompt_if_none(self.index_name.as_deref(), "Search Index Name?")
+        {
             Ok(name) => name,
             Err(e) => {
                 return Ok(DeleteResult::Failed {
@@ -172,30 +181,12 @@ impl CommandWithOutput for Delete {
     }
 }
 
-impl Delete {
-    fn prompt_if_none(&self, field: &Option<String>, prompt: &str) -> Result<String> {
-        match field {
-            Some(value) => Ok(value.clone()),
-            None => {
-                match self.interaction.input(
-                    InputPromptOptions::builder()
-                        .message(prompt.to_string())
-                        .build(),
-                )? {
-                    InputPromptResult::Input(value) => Ok(value),
-                    InputPromptResult::Canceled => Err(anyhow!("user canceled the prompt")),
-                }
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::dependencies::mocks::MockMongoDB;
-    use crate::interaction::SpinnerHandle;
     use crate::interaction::mocks::MockInteraction;
+    use crate::interaction::{InputPromptResult, SpinnerHandle};
 
     // ============================================================================
     // Test Helpers
