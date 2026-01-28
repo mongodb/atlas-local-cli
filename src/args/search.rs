@@ -11,6 +11,11 @@ pub enum Search {
 #[command(about = "Manage local search indexes.")]
 pub enum Indexes {
     Create(Create),
+    Describe(Describe),
+    #[command(alias = "ls")]
+    List(List),
+    #[command(alias = "rm")]
+    Delete(Delete),
 }
 
 #[derive(Args)]
@@ -45,5 +50,76 @@ pub struct Create {
     pub database_name: Option<String>,
     /// Name of the collection.
     #[arg(long, conflicts_with = "file")]
+    pub collection: Option<String>,
+}
+
+/// List all Atlas Search indexes for a deployment.
+#[derive(Args)]
+pub struct List {
+    /// Name of the deployment.
+    #[arg(long)]
+    pub deployment_name: String,
+
+    /// Username for authenticating to MongoDB.
+    #[arg(long = "username", requires = "password")]
+    pub username: Option<String>,
+    /// Password for authenticating to MongoDB.
+    #[arg(long = "password", requires = "username")]
+    pub password: Option<String>,
+
+    /// Name of the database.
+    #[arg(long = "db")]
+    pub database_name: Option<String>,
+    /// Name of the collection.
+    #[arg(long)]
+    pub collection: Option<String>,
+}
+
+/// Describe a search index for the specified deployment.
+#[derive(Args)]
+pub struct Describe {
+    /// ID of the index.
+    #[arg(index = 1)]
+    pub index_id: Option<String>,
+
+    /// Name of the deployment.
+    #[arg(long)]
+    pub deployment_name: String,
+
+    /// Username for authenticating to MongoDB.
+    #[arg(long = "username", requires = "password")]
+    pub username: Option<String>,
+    /// Password for authenticating to MongoDB.
+    #[arg(long = "password", requires = "username")]
+    pub password: Option<String>,
+}
+
+/// Delete the specified search index from the specified deployment.
+#[derive(Args)]
+pub struct Delete {
+    /// Name of the index.
+    #[arg(index = 1)]
+    pub index_name: Option<String>,
+
+    /// Name of the deployment.
+    #[arg(long)]
+    pub deployment_name: String,
+
+    /// Flag that indicates whether to skip the confirmation prompt before proceeding with the requested action.
+    #[arg(long)]
+    pub force: bool,
+
+    /// Username for authenticating to MongoDB.
+    #[arg(long = "username", requires = "password")]
+    pub username: Option<String>,
+    /// Password for authenticating to MongoDB.
+    #[arg(long = "password", requires = "username")]
+    pub password: Option<String>,
+
+    /// Name of the database.
+    #[arg(long = "db")]
+    pub database_name: Option<String>,
+    /// Name of the collection.
+    #[arg(long)]
     pub collection: Option<String>,
 }

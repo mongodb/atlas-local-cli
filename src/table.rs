@@ -67,9 +67,14 @@ impl Display for Table {
         // then get the length of each cell + 4 (for the padding)
         let max_column_widths: Vec<usize> = iter::once(&self.header)
             .chain(self.rows.iter())
-            .map(|row| row.iter().map(|cell| cell.len() + 4).collect())
-            .max()
-            .unwrap_or_default();
+            .map(|row| {
+                row.iter()
+                    .map(|cell| cell.len() + 4)
+                    .collect::<Vec<usize>>()
+            })
+            .fold(vec![0; self.header.len()], |acc, vec| {
+                acc.into_iter().zip(vec).map(|(a, b)| a.max(b)).collect()
+            });
 
         // print the rows with tab separation
         for row in iter::once(&self.header).chain(self.rows.iter()) {
@@ -122,7 +127,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "Name     Age   City        \nAlice    30    New York    \n"
+            "Name     Age    City        \nAlice    30     New York    \n"
         );
     }
 
@@ -155,7 +160,7 @@ mod tests {
         let table = Table::from_iter(people.iter(), columns);
         let output = format!("{}", table);
 
-        let expected = "Name       Age   City     \nAlice      30    New York \nBob        25    London   \nCharlie    35    Paris    \n";
+        let expected = "Name       Age    City        \nAlice      30     New York    \nBob        25     London      \nCharlie    35     Paris       \n";
         assert_eq!(output, expected);
     }
 
@@ -224,7 +229,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "ID    Name    Price    \n1     Widget  9.99     \n2     Gadget  19.99    \n"
+            "ID    Name      Price    \n1     Widget    9.99     \n2     Gadget    19.99    \n"
         );
     }
 }
