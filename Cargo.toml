@@ -15,7 +15,7 @@ anyhow = "1.0.86"
 async-trait = "0.1.89"
 atlas-local = "0.4.0"
 bollard = "0.19.4"
-clap = { version = "4.5.16", features = ["derive"] }
+clap = { version = "4.5.55", features = ["derive"] }
 console = "0.16.2"
 duration-str = "0.18.0"
 futures = "0.3.31"
@@ -35,7 +35,7 @@ url = "2.5.8"
 which = "8.0.0"
 
 [target.'cfg(windows)'.dependencies]
-winreg = "0.52"
+winreg = "0.55"
 
 # The profile that 'dist' will build with
 [profile.dist]
