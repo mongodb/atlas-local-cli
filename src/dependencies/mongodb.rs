@@ -37,6 +37,17 @@ pub trait SearchIndexLister {
     ) -> Result<Vec<SearchIndex>>;
 }
 
+/// Trait for deleting a search index by name.
+#[async_trait]
+pub trait SearchIndexDeleter {
+    async fn delete_search_index(
+        &self,
+        database_name: String,
+        collection_name: String,
+        index_name: String,
+    ) -> Result<()>;
+}
+
 // Dependency to create search indexes
 #[async_trait]
 pub trait SearchIndexCreator {
@@ -260,6 +271,27 @@ impl SearchIndexLister for Client {
     }
 }
 
+#[async_trait]
+impl SearchIndexDeleter for Client {
+    async fn delete_search_index(
+        &self,
+        database_name: String,
+        collection_name: String,
+        index_name: String,
+    ) -> Result<()> {
+        debug!(
+            database_name,
+            collection_name, index_name, "deleting search index"
+        );
+
+        self.database(&database_name)
+            .collection::<()>(&collection_name)
+            .drop_search_index(index_name)
+            .await
+            .map_err(mongodb_error_to_user_friendly_error)
+    }
+}
+
 #[cfg(test)]
 pub mod mocks {
     use super::*;
@@ -290,6 +322,16 @@ pub mod mocks {
                 database_name: String,
                 collection_name: String,
             ) -> Result<Vec<SearchIndex>>;
+        }
+
+        #[async_trait]
+        impl SearchIndexDeleter for MongoDB {
+            async fn delete_search_index(
+                &self,
+                database_name: String,
+                collection_name: String,
+                index_name: String,
+            ) -> Result<()>;
         }
     }
 }
