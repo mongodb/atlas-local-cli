@@ -70,6 +70,7 @@ impl clap::CommandFactory for Cli {
 }
 
 #[derive(Args)]
+#[command(rename_all = "camelCase")]
 pub struct GlobalArgs {
     /// Enable debug logging.
     ///
