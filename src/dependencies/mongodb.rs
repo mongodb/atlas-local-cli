@@ -5,9 +5,39 @@ use async_trait::async_trait;
 use futures::TryStreamExt;
 use mongodb::{Client, SearchIndexModel, bson::Document};
 use serde::{Deserialize, Serialize};
-use tracing::trace;
+use tracing::{debug, trace};
 
-// Dependency to list deployments
+/// A search index as returned by list_search_indexes.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SearchIndex {
+    /// The unique identifier of the search index.
+    #[serde(rename = "id")]
+    pub index_id: String,
+    /// The name of the search index.
+    pub name: String,
+    /// The name of the database containing this index.
+    pub database: String,
+    /// The name of the collection containing this index.
+    #[serde(rename = "collectionName")]
+    pub collection_name: String,
+    /// The status of the search index.
+    pub status: MongoDbSearchIndexStatus,
+    /// The type of the search index (e.g., "search" or "vectorSearch").
+    #[serde(rename = "type")]
+    pub index_type: Option<String>,
+}
+
+/// Trait for listing search indexes.
+#[async_trait]
+pub trait SearchIndexLister {
+    async fn list_search_indexes(
+        &self,
+        database_name: String,
+        collection_name: String,
+    ) -> Result<Vec<SearchIndex>>;
+}
+
+// Dependency to create search indexes
 #[async_trait]
 pub trait SearchIndexCreator {
     async fn create_search_index(&self, model: CreateSearchIndexModel) -> Result<String>;
@@ -177,6 +207,59 @@ impl SearchIndexStatusGetter for Client {
     }
 }
 
+#[async_trait]
+impl SearchIndexLister for Client {
+    async fn list_search_indexes(
+        &self,
+        database_name: String,
+        collection_name: String,
+    ) -> Result<Vec<SearchIndex>> {
+        debug!(database_name, collection_name, "listing search indexes");
+
+        let search_indexes = self
+            .database(&database_name)
+            .collection::<()>(&collection_name)
+            .list_search_indexes()
+            .await
+            .context("listing search indexes")?;
+
+        // Internal struct to deserialize the raw search index document.
+        // See: https://www.mongodb.com/docs/manual/reference/operator/aggregation/listSearchIndexes/
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        struct RawSearchIndex {
+            #[serde(rename = "id")]
+            index_id: String,
+            name: String,
+            #[serde(rename = "type")]
+            index_type: Option<String>,
+            status: MongoDbSearchIndexStatus,
+        }
+
+        let raw_search_indexes = search_indexes
+            .with_type::<RawSearchIndex>()
+            .try_collect::<Vec<_>>()
+            .await
+            .context("collecting search index definitions")?;
+
+        trace!(?raw_search_indexes, "raw search indexes");
+
+        // Convert raw search indexes to SearchIndex, adding database and collection info.
+        let search_indexes = raw_search_indexes
+            .into_iter()
+            .map(|raw| SearchIndex {
+                index_id: raw.index_id,
+                name: raw.name,
+                database: database_name.clone(),
+                collection_name: collection_name.clone(),
+                status: raw.status,
+                index_type: raw.index_type,
+            })
+            .collect();
+
+        Ok(search_indexes)
+    }
+}
+
 #[cfg(test)]
 pub mod mocks {
     use super::*;
@@ -198,6 +281,15 @@ pub mod mocks {
                 collection_name: String,
                 index_name: String,
             ) -> Result<Option<MongoDbSearchIndexStatus>>;
+        }
+
+        #[async_trait]
+        impl SearchIndexLister for MongoDB {
+            async fn list_search_indexes(
+                &self,
+                database_name: String,
+                collection_name: String,
+            ) -> Result<Vec<SearchIndex>>;
         }
     }
 }

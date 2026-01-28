@@ -11,6 +11,8 @@ pub enum Search {
 #[command(about = "Manage local search indexes.")]
 pub enum Indexes {
     Create(Create),
+    #[command(alias = "ls")]
+    List(List),
 }
 
 #[derive(Args)]
@@ -45,5 +47,27 @@ pub struct Create {
     pub database_name: Option<String>,
     /// Name of the collection.
     #[arg(long, conflicts_with = "file")]
+    pub collection: Option<String>,
+}
+
+/// List all Atlas Search indexes for a deployment.
+#[derive(Args)]
+pub struct List {
+    /// Name of the deployment.
+    #[arg(long)]
+    pub deployment_name: String,
+
+    /// Username for authenticating to MongoDB.
+    #[arg(long = "username", requires = "password")]
+    pub username: Option<String>,
+    /// Password for authenticating to MongoDB.
+    #[arg(long = "password", requires = "username")]
+    pub password: Option<String>,
+
+    /// Name of the database.
+    #[arg(long = "db")]
+    pub database_name: Option<String>,
+    /// Name of the collection.
+    #[arg(long)]
     pub collection: Option<String>,
 }

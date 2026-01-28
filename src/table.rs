@@ -67,9 +67,14 @@ impl Display for Table {
         // then get the length of each cell + 4 (for the padding)
         let max_column_widths: Vec<usize> = iter::once(&self.header)
             .chain(self.rows.iter())
-            .map(|row| row.iter().map(|cell| cell.len() + 4).collect())
-            .max()
-            .unwrap_or_default();
+            .map(|row| {
+                row.iter()
+                    .map(|cell| cell.len() + 4)
+                    .collect::<Vec<usize>>()
+            })
+            .fold(vec![0; self.header.len()], |acc, vec| {
+                acc.into_iter().zip(vec).map(|(a, b)| a.max(b)).collect()
+            });
 
         // print the rows with tab separation
         for row in iter::once(&self.header).chain(self.rows.iter()) {

@@ -62,6 +62,16 @@ async fn search_command_from_args(args: Search, format: Format) -> Result<Box<dy
                 .await?
                 .with_print_to_stdout(format)
             }
+            Indexes::List(list_args) => {
+                search::list::List::with_mongodb_client_for_local_deployment(
+                    list_args,
+                    |args| args.deployment_name.clone(),
+                    |args| args.username.clone(),
+                    |args| args.password.clone(),
+                )
+                .await?
+                .with_print_to_stdout(format)
+            }
         },
     }
 }
