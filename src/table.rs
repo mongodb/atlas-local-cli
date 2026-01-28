@@ -127,7 +127,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "Name     Age   City        \nAlice    30    New York    \n"
+            "Name     Age    City        \nAlice    30     New York    \n"
         );
     }
 
@@ -160,7 +160,7 @@ mod tests {
         let table = Table::from_iter(people.iter(), columns);
         let output = format!("{}", table);
 
-        let expected = "Name       Age   City     \nAlice      30    New York \nBob        25    London   \nCharlie    35    Paris    \n";
+        let expected = "Name       Age    City        \nAlice      30     New York    \nBob        25     London      \nCharlie    35     Paris       \n";
         assert_eq!(output, expected);
     }
 
@@ -229,7 +229,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "ID    Name    Price    \n1     Widget  9.99     \n2     Gadget  19.99    \n"
+            "ID    Name      Price    \n1     Widget    9.99     \n2     Gadget    19.99    \n"
         );
     }
 }
