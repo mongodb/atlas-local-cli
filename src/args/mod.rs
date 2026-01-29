@@ -182,7 +182,7 @@ pub struct Connect {
 
     /// Method for connecting to the deployment.
     #[arg(long)]
-    pub connector: ConnectWith,
+    pub connect_with: ConnectWith,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, ValueEnum)]

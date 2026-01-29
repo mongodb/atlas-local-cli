@@ -49,3 +49,7 @@ futures-util = "0.3.31"
 mockall = "0.14.0"
 trycmd = "0.15.11"
 which = "8.0.0"
+
+[[bin]]
+name = "atlas-local-docs-generator"
+path = "src/docs-generator.rs"

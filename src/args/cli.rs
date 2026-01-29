@@ -102,8 +102,7 @@ pub struct GlobalArgs {
 /// or as a standalone command (`atlas-local`).
 #[derive(Subcommand)]
 pub enum PluginSubCommands {
-    /// The local plugin subcommand
-    /// This is the root subcommand when executing the executable as a plugin.
+    /// Manage local deployments.
     #[command(hide = true)]
     Local {
         #[command(subcommand)]
