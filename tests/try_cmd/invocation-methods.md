@@ -37,7 +37,7 @@ In plugin mode the usage string in the help text should be: `Usage: atlas local 
 
 ```trycmd
 $ atlas local --help
-The local plugin subcommand This is the root subcommand when executing the executable as a plugin
+Manage local deployments
 
 Usage: atlas local [OPTIONS] <COMMAND>
 
