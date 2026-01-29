@@ -246,7 +246,7 @@ impl Command {
             output.push_str(TOCTREE_HEADER);
             output.push('\n');
 
-            for (name, _) in subcommands {
+            for name in subcommands.keys() {
                 let child_command = format!("{} {}", full_command, name);
                 let child_ref = child_command.replace(' ', "-");
                 writeln!(output, "   {} </command/{}>", name, child_ref).unwrap();
@@ -307,7 +307,7 @@ impl Command {
             writeln!(output, "     - help for {}", last_command).unwrap();
         }
 
-        for (_, flag) in flags {
+        for flag in flags.values() {
             let type_str = flag.flag_type.as_ref().map(|t| t.type_name()).unwrap_or("");
             let required_str = if flag.required { "true" } else { "false" };
             let desc = flag.description.as_deref().unwrap_or("");
