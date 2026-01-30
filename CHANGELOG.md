@@ -1,3 +1,8 @@
+## [0.0.6] - 2026-01-30
+
+### ⚙️ Miscellaneous Tasks
+
+- Fix zip signing ([#31](https://github.com/mongodb/atlas-local-cli/pull/31))
 ## [0.0.5] - 2026-01-30
 
 ### ⚙️ Miscellaneous Tasks
