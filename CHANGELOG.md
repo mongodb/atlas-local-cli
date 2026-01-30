@@ -1,3 +1,8 @@
+## [0.0.5] - 2026-01-30
+
+### ⚙️ Miscellaneous Tasks
+
+- Sign zip artifacts ([#30](https://github.com/mongodb/atlas-local-cli/pull/30))
 ## [0.0.4] - 2026-01-30
 
 ### 🚀 Features
