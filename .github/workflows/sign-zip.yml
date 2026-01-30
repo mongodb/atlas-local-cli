@@ -1,0 +1,128 @@
+name: Sign Zip
+
+on:
+  workflow_call:
+    inputs:
+      plan:
+        required: true
+        type: string
+
+jobs:
+  sign-zip:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Parse plan and set variables
+        id: parse-plan
+        run: |
+          # Parse the plan JSON to extract release information
+          PLAN='${{ inputs.plan }}'
+          
+          # Extract release tag
+          TAG=$(echo "$PLAN" | jq -r '.announcement_tag')
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          
+          # Extract owner and repo
+          OWNER=$(echo "$PLAN" | jq -r '.releases[0].hosting.github.owner')
+          REPO=$(echo "$PLAN" | jq -r '.releases[0].hosting.github.repo')
+          echo "owner=$OWNER" >> "$GITHUB_OUTPUT"
+          echo "repo=$REPO" >> "$GITHUB_OUTPUT"
+          
+          # Extract zip/tar.gz artifacts (executable-zip kind)
+          # Filter artifacts that are executable-zip type
+          ARCHIVES=$(echo "$PLAN" | jq -r '.artifacts | to_entries[] | select(.value.kind == "executable-zip") | .key')
+          echo "Found archives to sign:"
+          echo "$ARCHIVES"
+          
+          # Save as multiline output
+          echo "archives<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$ARCHIVES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Download release artifacts
+        run: |
+          mkdir -p artifacts
+          cd artifacts
+          
+          # Download each archive from the release
+          while IFS= read -r artifact; do
+            if [ -n "$artifact" ]; then
+              echo "Downloading $artifact..."
+              gh release download "${{ steps.parse-plan.outputs.tag }}" \
+                --repo "${{ steps.parse-plan.outputs.owner }}/${{ steps.parse-plan.outputs.repo }}" \
+                --pattern "$artifact"
+            fi
+          done <<< "${{ steps.parse-plan.outputs.archives }}"
+          
+          echo "Downloaded artifacts:"
+          ls -la
+
+      - name: Import GPG key
+        run: |
+          # Import the GPG private key from secrets
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+          
+          # Trust the key
+          KEY_ID=$(gpg --list-secret-keys --keyid-format LONG | grep sec | head -1 | awk '{print $2}' | cut -d'/' -f2)
+          echo "Imported key ID: $KEY_ID"
+          echo "$KEY_ID:6:" | gpg --import-ownertrust
+          echo "key_id=$KEY_ID" >> "$GITHUB_ENV"
+
+      - name: Sign artifacts
+        run: |
+          cd artifacts
+          
+          # Sign each archive
+          while IFS= read -r artifact; do
+            if [ -n "$artifact" ] && [ -f "$artifact" ]; then
+              echo "Signing $artifact..."
+              
+              # Create detached signature (.sig file)
+              gpg --batch --yes --detach-sign \
+                --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
+                --pinentry-mode loopback \
+                --output "${artifact}.sig" \
+                "$artifact"
+              
+              echo "Created signature: ${artifact}.sig"
+            fi
+          done <<< "${{ steps.parse-plan.outputs.archives }}"
+          
+          echo "Signatures created:"
+          ls -la *.sig
+
+      - name: Create public key file
+        run: |
+          # Write the public key from secret to signature.asc
+          echo "${{ secrets.GPG_PUBLIC_KEY }}" > artifacts/signature.asc
+          echo "Created signature.asc with public key"
+
+      - name: Upload signatures to release
+        run: |
+          cd artifacts
+          
+          # Upload public key
+          echo "Uploading signature.asc (public key) to release..."
+          gh release upload "${{ steps.parse-plan.outputs.tag }}" \
+            --repo "${{ steps.parse-plan.outputs.owner }}/${{ steps.parse-plan.outputs.repo }}" \
+            "signature.asc" \
+            --clobber
+          
+          # Upload all artifact signature files
+          for sig_file in *.tar.gz.sig *.zip.sig; do
+            if [ -f "$sig_file" ]; then
+              echo "Uploading $sig_file to release..."
+              gh release upload "${{ steps.parse-plan.outputs.tag }}" \
+                --repo "${{ steps.parse-plan.outputs.owner }}/${{ steps.parse-plan.outputs.repo }}" \
+                "$sig_file" \
+                --clobber
+            fi
+          done
+          
+          echo "All signatures uploaded successfully"
