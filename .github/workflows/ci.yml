@@ -14,6 +14,36 @@ env:
   CARGO_ABOUT_VERSION: 0.8.4
 
 jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Install libdbus-1-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libdbus-1-dev
+
+    - name: Install Rust toolchain
+      run: |
+        rustup update stable
+        rustup default stable
+
+    - name: Generate docs
+      run: cargo run --bin atlas-local-docs-generator
+
+    - name: Check for uncommitted files
+      run: |
+        FILES=$(git ls-files -o -m --directory --exclude-standard --no-empty-directory)
+        LINES=$(echo "$FILES" | awk 'NF' | wc -l)
+        if [ "$LINES" -ne 0 ]; then
+          echo "Detected files that need to be committed:"
+          echo "${FILES//^/ }"
+          echo ""
+          echo "Try running: cargo run --bin atlas-local-docs-generator"
+          exit 1
+        fi
+
   check:
     runs-on: ubuntu-latest
     steps:

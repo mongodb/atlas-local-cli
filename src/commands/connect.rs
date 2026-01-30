@@ -100,7 +100,7 @@ impl TryFrom<args::Connect> for Connect {
     fn try_from(args: args::Connect) -> Result<Self> {
         Ok(Self {
             deployment_name: args.deployment_name,
-            connector: args.connector,
+            connector: args.connect_with,
             interaction: Box::new(Interaction::new()),
             deployment_inspector: Box::new(Client::new(Docker::connect_with_defaults()?)),
             connectors: HashMap::from([
