@@ -1,3 +1,17 @@
+## [0.0.4] - 2026-01-30
+
+### 🚀 Features
+
+- Atlas search indexes create ([#25](https://github.com/mongodb/atlas-local-cli/pull/25))
+- Implement search indexes list/delete/describe ([#26](https://github.com/mongodb/atlas-local-cli/pull/26))
+
+### 📚 Documentation
+
+- Auto-generate docs from clap ([#29](https://github.com/mongodb/atlas-local-cli/pull/29))
+
+### ⚙️ Miscellaneous Tasks
+
+- Rename all flags from --kebab-case to --camelCase to be backwards compatible with the atlas cli ([#28](https://github.com/mongodb/atlas-local-cli/pull/28))
 ## [0.0.3] - 2026-01-14
 
 ### 🚀 Features
