@@ -7,9 +7,14 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: write
+
 jobs:
   sign-zip:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
