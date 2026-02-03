@@ -28,5 +28,9 @@ cargo-cyclonedx = true
 # Publish jobs to run in CI
 publish-jobs = ["./sign-zip"]
 
+# Add contents:write permission for publish jobs (needed to upload release assets)
+# Note: overriding removes defaults, so we include id-token and packages too
+github-custom-job-permissions = { "sign-zip" = { contents = "write", id-token = "write", packages = "write" } }
+
 [dist.dependencies.apt]
 libdbus-1-dev = '*'
