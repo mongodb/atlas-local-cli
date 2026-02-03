@@ -87,8 +87,8 @@ jobs:
             if [ -n "$artifact" ] && [ -f "$artifact" ]; then
               echo "Signing $artifact..."
               
-              # Create detached signature (.sig file)
-              gpg --batch --yes --detach-sign \
+              # Create detached ASCII-armored signature (.sig file)
+              gpg --batch --yes --armor --detach-sign \
                 --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
                 --pinentry-mode loopback \
                 --output "${artifact}.sig" \
