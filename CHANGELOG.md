@@ -1,3 +1,8 @@
+## [0.0.7] - 2026-02-03
+
+### ⚙️ Miscellaneous Tasks
+
+- Fix missing write permissions in 'sign-zip' workflow ([#33](https://github.com/mongodb/atlas-local-cli/pull/33))
 ## [0.0.6] - 2026-01-30
 
 ### ⚙️ Miscellaneous Tasks
