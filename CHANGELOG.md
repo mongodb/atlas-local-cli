@@ -1,3 +1,8 @@
+## [0.0.8] - 2026-02-03
+
+### ⚙️ Miscellaneous Tasks
+
+- Make .sig files armored ([#34](https://github.com/mongodb/atlas-local-cli/pull/34))
 ## [0.0.7] - 2026-02-03
 
 ### ⚙️ Miscellaneous Tasks
