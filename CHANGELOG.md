@@ -1,3 +1,8 @@
+## [0.0.9] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- *(connect)* Output raw connection string without prefix ([#36](https://github.com/mongodb/atlas-local-cli/pull/36))
 ## [0.0.8] - 2026-02-03
 
 ### ⚙️ Miscellaneous Tasks
