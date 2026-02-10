@@ -82,11 +82,7 @@ impl Display for ConnectResult {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Success { connection_string } => match connection_string {
-                Some(connection_string) => write!(
-                    f,
-                    "The connection string for the deployment is: {}",
-                    connection_string
-                ),
+                Some(connection_string) => write!(f, "{}", connection_string),
                 None => write!(f, "Finished successfully connecting to deployment"),
             },
             Self::Failed { error } => write!(f, "Failed to connect to deployment: {}", error),
