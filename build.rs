@@ -32,6 +32,7 @@ fn build_template_vars() -> HashMap<&'static str, String> {
     let repo_url = env::var("CARGO_PKG_REPOSITORY").expect("Failed to read CARGO_PKG_REPOSITORY");
 
     let github_path = repo_url
+        .trim_end_matches('/')
         .strip_prefix("https://github.com/")
         .expect("Repository URL must start with 'https://github.com/'");
 
