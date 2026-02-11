@@ -46,9 +46,22 @@ impl<T: SpinnerInteraction + SelectPrompt + InputPrompt + MultiStepSpinnerIntera
 {
 }
 
+/// Reads `MONGODB_ATLAS_LOCAL_PREVIEW` environment variable.
+/// Returns `Some(true)` for "true", `Some(false)` for "false" (case-insensitive), `None` if unset or invalid.
+fn preview_from_env() -> Option<bool> {
+    std::env::var("MONGODB_ATLAS_LOCAL_PREVIEW").ok().and_then(|v| {
+        match v.to_lowercase().as_str() {
+            "true" | "1" => Some(true),
+            "false" | "0" => Some(false),
+            _ => None,
+        }
+    })
+}
+
 pub struct Setup {
     deployment_name: Option<String>,
     mdb_version: Option<MongoDBVersion>,
+    use_preview_tag: Option<bool>,
     port: Option<u16>,
     bind_ip_all: bool,
     initdb: Option<PathBuf>,
@@ -73,6 +86,7 @@ impl TryFrom<args::Setup> for Setup {
         Ok(Self {
             deployment_name: args.deployment_name,
             mdb_version: args.mdb_version,
+            use_preview_tag: None,
             port: args.port,
             bind_ip_all: args.bind_ip_all,
             initdb: args.initdb,
@@ -186,6 +200,15 @@ impl CommandWithOutput for Setup {
     type Output = SetupResult;
 
     async fn execute(&mut self) -> Result<Self::Output> {
+        self.use_preview_tag = preview_from_env();
+
+        // MONGODB_ATLAS_LOCAL_PREVIEW=true cannot be used together with --mdbVersion
+        if self.use_preview_tag == Some(true) && self.mdb_version.is_some() {
+            return Err(anyhow::anyhow!(
+                "MONGODB_ATLAS_LOCAL_PREVIEW=true cannot be used together with the --mdbVersion flag"
+            ));
+        }
+
         // If the force flag is not set, prompt the user for the settings
         if !self.force {
             // If the user canceled the setup, setup_result will be Some
@@ -218,6 +241,7 @@ impl CommandWithOutput for Setup {
             },
             image: self.image.clone(),
             skip_pull_image: Some(self.skip_pull_image),
+            use_preview_tag: self.use_preview_tag,
             ..Default::default()
         };
 
@@ -401,23 +425,25 @@ impl Setup {
             return Ok(PromptCustomSettingsResult::Canceled);
         }
 
-        // Prompt for the MongoDB version
-        let prompt_mdb_version_result = self.prompt_field_with_validator(
-            "Major MongoDB Version?",
-            Some("latest"),
-            |setup| setup.mdb_version.as_ref().map(ToString::to_string),
-            |setup, mdb_version| {
-                setup.mdb_version =
-                    Some(MongoDBVersion::try_from(mdb_version.as_str()).map_err(|e| {
-                        anyhow::anyhow!("converting string to MongoDBVersion: {}", e)
-                    })?);
-                Ok(())
-            },
-            validators::MdbVersionValidator,
-        )?;
+        // Prompt for the MongoDB version unless MONGODB_ATLAS_LOCAL_PREVIEW is set
+        if self.use_preview_tag.is_none() {
+            let prompt_mdb_version_result = self.prompt_field_with_validator(
+                "Major MongoDB Version?",
+                Some("latest"),
+                |setup| setup.mdb_version.as_ref().map(ToString::to_string),
+                |setup, mdb_version| {
+                    setup.mdb_version =
+                        Some(MongoDBVersion::try_from(mdb_version.as_str()).map_err(|e| {
+                            anyhow::anyhow!("converting string to MongoDBVersion: {}", e)
+                        })?);
+                    Ok(())
+                },
+                validators::MdbVersionValidator,
+            )?;
 
-        if let PromptCustomSettingsResult::Canceled = prompt_mdb_version_result {
-            return Ok(PromptCustomSettingsResult::Canceled);
+            if let PromptCustomSettingsResult::Canceled = prompt_mdb_version_result {
+                return Ok(PromptCustomSettingsResult::Canceled);
+            }
         }
 
         let prompt_port_result = self.prompt_field_with_validator(
@@ -811,6 +837,7 @@ mod tests {
         Setup {
             deployment_name,
             mdb_version,
+            use_preview_tag: None,
             port,
             bind_ip_all,
             initdb,
