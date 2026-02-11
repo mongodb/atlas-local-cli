@@ -9,7 +9,7 @@
 
 use anyhow::{Context, Result};
 use args::Cli;
-use clap::Parser;
+use clap::{Parser, error::ErrorKind};
 use mongodb_atlas_cli::config::{self, OutputFormat};
 use tracing::debug;
 
@@ -31,7 +31,25 @@ mod table;
 #[tokio::main]
 async fn main() -> Result<()> {
     // Parse the CLI arguments.
-    let cli = Cli::parse();
+    let cli = match Cli::try_parse() {
+        Ok(cli) => cli,
+        Err(e) => {
+            // Mimic the behavior of clap::Command::parse()
+            // but for every "error" that shows a help message, we print the help message and return Ok(())
+            // instead of printing the error message and exiting with error code 2
+            match e.kind() {
+                ErrorKind::DisplayHelp
+                | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
+                | ErrorKind::DisplayVersion => {
+                    _ = e.print();
+                    return Ok(());
+                }
+                _ => {
+                    e.exit();
+                }
+            }
+        }
+    };
 
     // Split the CLI arguments into global and local arguments.
     let global_args = cli.global_args;

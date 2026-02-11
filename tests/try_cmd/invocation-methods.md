@@ -8,7 +8,6 @@ In standalone mode the usage string in the help text should be: `Usage: atlas-lo
 
 ```trycmd
 $ atlas-local
-? 2
 Manage local deployments
 
 Usage: atlas-local [OPTIONS] <COMMAND>
