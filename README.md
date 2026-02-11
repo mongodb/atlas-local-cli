@@ -2,9 +2,6 @@
 
 > A CLI to manage [MongoDB Atlas local](https://hub.docker.com/repository/docker/mongodb/mongodb-atlas-local/general) environments
 
-> [!WARNING]
-> This project is a **work in progress** and is **not production ready**. APIs and functionality may change without notice.
-
 ## Overview
 
 `atlas-local-cli` is a dedicated command-line tool focused strictly on the management of [MongoDB Atlas local](https://hub.docker.com/repository/docker/mongodb/mongodb-atlas-local/general) environments.
@@ -18,10 +15,12 @@ It provides a streamlined way to create, manage, and control local atlas instanc
 ## Installation
 
 ## As an Atlas CLI plugin
-TODO
+The Atlas Local CLI is installed as a first-class plugin inside the Atlas CLI.
+
+You can run the commands by running `atlas local *`
 
 ## As a standalone CLI
-TODO
+See the instructions on the releases page: https://github.com/mongodb/atlas-local-cli/releases/
 
 ### From source
 
