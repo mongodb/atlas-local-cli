@@ -1,3 +1,13 @@
+## [0.10.0] - 2026-02-11
+
+### 🐛 Bug Fixes
+
+- *(build)* Remove trailing slash from repository URL in manifest generation ([#37](https://github.com/mongodb/atlas-local-cli/pull/37))
+
+### ⚙️ Miscellaneous Tasks
+
+- Return error code 0 for commands that display usage texts or the application version ([#38](https://github.com/mongodb/atlas-local-cli/pull/38))
+- Revise README for Atlas Local CLI installation details ([#39](https://github.com/mongodb/atlas-local-cli/pull/39))
 ## [0.0.9] - 2026-02-10
 
 ### 🐛 Bug Fixes
