@@ -15,7 +15,7 @@ It provides a streamlined way to create, manage, and control local atlas instanc
 ## Installation
 
 ## As an Atlas CLI plugin
-The Atlas Local CLI is installed as a first-class plugin inside the Atlas CLI.
+The Atlas Local CLI is installed as a first-class plugin inside the Atlas CLI. The plugin will automatically be installed on the first call of the command.
 
 You can run the commands by running `atlas local *`
 
