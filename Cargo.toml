@@ -14,7 +14,7 @@ generate-manifest = []
 [dependencies]
 anyhow = "1.0.101"
 async-trait = "0.1.89"
-atlas-local = { git = "https://github.com/mongodb/atlas-local-lib", rev = "b4a86ac23927d97b197d24bae3856fcec72fd249" }
+atlas-local = "0.4.1"
 bollard = "0.20"
 clap = { version = "4.5.57", features = ["derive"] }
 console = "0.16.2"
