@@ -49,13 +49,13 @@ impl<T: SpinnerInteraction + SelectPrompt + InputPrompt + MultiStepSpinnerIntera
 /// Reads `MONGODB_ATLAS_LOCAL_PREVIEW` environment variable.
 /// Returns `Some(true)` for "true", `Some(false)` for "false" (case-insensitive), `None` if unset or invalid.
 fn preview_from_env() -> Option<bool> {
-    std::env::var("MONGODB_ATLAS_LOCAL_PREVIEW").ok().and_then(|v| {
-        match v.to_lowercase().as_str() {
+    std::env::var("MONGODB_ATLAS_LOCAL_PREVIEW")
+        .ok()
+        .and_then(|v| match v.to_lowercase().as_str() {
             "true" | "1" => Some(true),
             "false" | "0" => Some(false),
             _ => None,
-        }
-    })
+        })
 }
 
 pub struct Setup {
