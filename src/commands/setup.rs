@@ -47,7 +47,6 @@ impl<T: SpinnerInteraction + SelectPrompt + InputPrompt + MultiStepSpinnerIntera
 }
 
 /// Parses a string as a boolean: "true"/"1" => true, "false"/"0" => false (case-insensitive).
-/// Std's `bool::from_str` only accepts "true"/"false"; this also accepts "1"/"0".
 fn parse_bool(s: &str) -> Result<bool> {
     match s.to_lowercase().as_str() {
         "true" | "1" => Ok(true),
@@ -56,7 +55,7 @@ fn parse_bool(s: &str) -> Result<bool> {
     }
 }
 
-/// Reads an environment variable as a boolean (e.g. `MONGODB_ATLAS_LOCAL_PREVIEW`).
+/// Reads an environment variable as a boolean.
 /// Returns `None` if unset, `Some(true)`/`Some(false)` if set to a valid value, error if invalid.
 fn bool_from_env(key: &str) -> Result<Option<bool>> {
     let v = match std::env::var(key) {
@@ -64,7 +63,9 @@ fn bool_from_env(key: &str) -> Result<Option<bool>> {
         Err(std::env::VarError::NotPresent) => return Ok(None),
         Err(e) => return Err(e.into()),
     };
-    parse_bool(&v).map(Some).map_err(|e| anyhow::anyhow!("invalid value for {}: {}", key, e))
+    parse_bool(&v)
+        .map(Some)
+        .map_err(|e| anyhow::anyhow!("invalid value for {}: {}", key, e))
 }
 
 pub struct Setup {
@@ -2488,7 +2489,11 @@ mod tests {
             "error message should mention expected values: {}",
             msg
         );
-        assert!(msg.contains("invalid"), "error message should mention the invalid value: {}", msg);
+        assert!(
+            msg.contains("invalid"),
+            "error message should mention the invalid value: {}",
+            msg
+        );
     }
 
     #[test]
