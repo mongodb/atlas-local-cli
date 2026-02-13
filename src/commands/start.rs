@@ -299,6 +299,7 @@ mod tests {
             runner_log_file: None,
             do_not_track: true,
             telemetry_base_url: None,
+            voyage_api_key: None,
         }
     }
 

@@ -19,7 +19,7 @@ impl InputValidator for MdbVersionValidator {
     fn validate(&self, input: &str) -> Result<InputValidatorResult> {
         match MongoDBVersion::try_from(input) {
             Ok(v) => match v {
-                MongoDBVersion::Latest => Ok(InputValidatorResult::Valid),
+                MongoDBVersion::Latest | MongoDBVersion::Preview => Ok(InputValidatorResult::Valid),
                 MongoDBVersion::Major(MongoDBVersionMajor { major })
                 | MongoDBVersion::MajorMinor(MongoDBVersionMajorMinor { major, .. })
                 | MongoDBVersion::MajorMinorPatch(MongoDBVersionMajorMinorPatch {
@@ -66,6 +66,10 @@ mod tests {
         ));
         assert!(matches!(
             validator.validate("8.2.2").unwrap(),
+            InputValidatorResult::Valid
+        ));
+        assert!(matches!(
+            validator.validate("preview").unwrap(),
             InputValidatorResult::Valid
         ));
 
