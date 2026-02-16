@@ -2796,10 +2796,10 @@ OVERVIEW OF LICENSES:
         - anstyle-query 1.1.5 (https://github.com/rust-cli/anstyle.git)
         - anstyle-wincon 3.0.11 (https://github.com/rust-cli/anstyle.git)
         - anstyle 1.0.13 (https://github.com/rust-cli/anstyle.git)
-        - clap 4.5.57 (https://github.com/clap-rs/clap)
-        - clap_builder 4.5.57 (https://github.com/clap-rs/clap)
+        - clap 4.5.58 (https://github.com/clap-rs/clap)
+        - clap_builder 4.5.58 (https://github.com/clap-rs/clap)
         - clap_derive 4.5.55 (https://github.com/clap-rs/clap)
-        - clap_lex 0.7.7 (https://github.com/clap-rs/clap)
+        - clap_lex 1.0.0 (https://github.com/clap-rs/clap)
         - colorchoice 1.0.4 (https://github.com/rust-cli/anstyle.git)
         - config 0.15.19 (https://github.com/rust-cli/config-rs)
         - enum-as-inner 0.6.1 (https://github.com/bluejekyll/enum-as-inner)
@@ -2809,15 +2809,15 @@ OVERVIEW OF LICENSES:
         - once_cell_polyfill 1.70.2 (https://github.com/polyfill-rs/once_cell_polyfill)
         - resolv-conf 0.7.6 (https://github.com/hickory-dns/resolv-conf)
         - serde_spanned 1.0.4 (https://github.com/toml-rs/toml)
-        - snapbox-macros 0.4.0 (https://github.com/assert-rs/snapbox/)
-        - snapbox 0.6.24 (https://github.com/assert-rs/snapbox/)
+        - snapbox-macros 1.0.0 (https://github.com/assert-rs/snapbox/)
+        - snapbox 1.0.0 (https://github.com/assert-rs/snapbox/)
         - stringprep 0.1.5 (https://github.com/sfackler/rust-stringprep)
         - toml 0.9.11+spec-1.1.0 (https://github.com/toml-rs/toml)
         - toml_datetime 0.7.5+spec-1.1.0 (https://github.com/toml-rs/toml)
         - toml_edit 0.23.10+spec-1.0.0 (https://github.com/toml-rs/toml)
         - toml_parser 1.0.6+spec-1.1.0 (https://github.com/toml-rs/toml)
         - toml_writer 1.0.6+spec-1.1.0 (https://github.com/toml-rs/toml)
-        - trycmd 0.15.11 (https://github.com/assert-rs/snapbox/)
+        - trycmd 1.0.0 (https://github.com/assert-rs/snapbox/)
 -----------------------------------------------------------------------------
 
                                  Apache License
@@ -3238,15 +3238,15 @@ OVERVIEW OF LICENSES:
 -----------------------------------------------------------------------------
                         Apache License 2.0
         applies to: 
-        - futures-channel 0.3.31 (https://github.com/rust-lang/futures-rs)
-        - futures-core 0.3.31 (https://github.com/rust-lang/futures-rs)
-        - futures-executor 0.3.31 (https://github.com/rust-lang/futures-rs)
-        - futures-io 0.3.31 (https://github.com/rust-lang/futures-rs)
-        - futures-macro 0.3.31 (https://github.com/rust-lang/futures-rs)
-        - futures-sink 0.3.31 (https://github.com/rust-lang/futures-rs)
-        - futures-task 0.3.31 (https://github.com/rust-lang/futures-rs)
-        - futures-util 0.3.31 (https://github.com/rust-lang/futures-rs)
-        - futures 0.3.31 (https://github.com/rust-lang/futures-rs)
+        - futures-channel 0.3.32 (https://github.com/rust-lang/futures-rs)
+        - futures-core 0.3.32 (https://github.com/rust-lang/futures-rs)
+        - futures-executor 0.3.32 (https://github.com/rust-lang/futures-rs)
+        - futures-io 0.3.32 (https://github.com/rust-lang/futures-rs)
+        - futures-macro 0.3.32 (https://github.com/rust-lang/futures-rs)
+        - futures-sink 0.3.32 (https://github.com/rust-lang/futures-rs)
+        - futures-task 0.3.32 (https://github.com/rust-lang/futures-rs)
+        - futures-util 0.3.32 (https://github.com/rust-lang/futures-rs)
+        - futures 0.3.32 (https://github.com/rust-lang/futures-rs)
 -----------------------------------------------------------------------------
 
                               Apache License
@@ -6907,7 +6907,7 @@ limitations under the License.
         - dirs 6.0.0 (https://github.com/soc/dirs-rs)
         - document-features 0.2.12 (https://github.com/slint-ui/document-features)
         - dunce 1.0.5 (https://gitlab.com/kornelski/dunce)
-        - duration-str 0.19.0 (https://github.com/baoyachi/duration-str)
+        - duration-str 0.20.0 (https://github.com/baoyachi/duration-str)
         - dyn-clone 1.0.20 (https://github.com/dtolnay/dyn-clone)
         - erased-serde 0.4.9 (https://github.com/dtolnay/erased-serde)
         - ident_case 1.0.1 (https://github.com/TedDriggs/ident_case)
@@ -9160,7 +9160,7 @@ THE SOFTWARE.
                         MIT License
         applies to: 
         - console 0.16.2 (https://github.com/console-rs/console)
-        - indicatif 0.18.3 (https://github.com/console-rs/indicatif)
+        - indicatif 0.18.4 (https://github.com/console-rs/indicatif)
 -----------------------------------------------------------------------------
 
 The MIT License (MIT)
