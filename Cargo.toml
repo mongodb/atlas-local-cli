@@ -16,11 +16,11 @@ anyhow = "1.0.101"
 async-trait = "0.1.89"
 atlas-local = "0.4.0"
 bollard = "0.19.4"
-clap = { version = "4.5.57", features = ["derive"] }
+clap = { version = "4.5.58", features = ["derive"] }
 console = "0.16.2"
-duration-str = "0.19.0"
-futures = "0.3.31"
-indicatif = "0.18.3"
+duration-str = "0.20.0"
+futures = "0.3.32"
+indicatif = "0.18.4"
 inquire = "0.9.3"
 mongodb = "3.5.1"
 mongodb-atlas-cli = "0.0.2"
@@ -45,10 +45,10 @@ lto = "thin"
 
 [dev-dependencies]
 bytes = "1.11"
-futures = "0.3.31"
+futures = "0.3.32"
 futures-util = "0.3.31"
 mockall = "0.14.0"
-trycmd = "0.15.11"
+trycmd = "1.0.0"
 which = "8.0.0"
 
 [[bin]]
