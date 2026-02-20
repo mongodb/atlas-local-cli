@@ -71,6 +71,7 @@ fn bool_from_env(key: &str) -> Result<Option<bool>> {
 pub struct Setup {
     deployment_name: Option<String>,
     mdb_version: Option<MongoDBVersion>,
+    use_preview: Option<bool>,
     voyage_api_key: Option<String>,
     port: Option<u16>,
     bind_ip_all: bool,
@@ -93,23 +94,10 @@ impl TryFrom<args::Setup> for Setup {
     type Error = anyhow::Error;
 
     fn try_from(args: args::Setup) -> Result<Self> {
-        let use_preview = bool_from_env("MONGODB_ATLAS_LOCAL_PREVIEW")?;
-        if use_preview == Some(true) && args.mdb_version.is_some() {
-            anyhow::bail!(
-                "MONGODB_ATLAS_LOCAL_PREVIEW=true cannot be used together with the --mdbVersion flag"
-            );
-        }
-        let mdb_version = if args.mdb_version.is_some() {
-            args.mdb_version
-        } else if use_preview == Some(true) {
-            MongoDBVersion::try_from("preview").ok()
-        } else {
-            None
-        };
-
         Ok(Self {
             deployment_name: args.deployment_name,
-            mdb_version,
+            mdb_version: args.mdb_version,
+            use_preview: bool_from_env("MONGODB_ATLAS_LOCAL_PREVIEW")?,
             voyage_api_key: std::env::var("MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY").ok(),
             port: args.port,
             bind_ip_all: args.bind_ip_all,
@@ -224,6 +212,16 @@ impl CommandWithOutput for Setup {
     type Output = SetupResult;
 
     async fn execute(&mut self) -> Result<Self::Output> {
+        if self.use_preview == Some(true) {
+            if self.mdb_version.is_some() {
+                return Err(anyhow::anyhow!(
+                    "MONGODB_ATLAS_LOCAL_PREVIEW=true cannot be used together with the --mdbVersion flag"
+                ));
+            }
+            // Use preview version when use_preview is true
+            self.mdb_version = MongoDBVersion::try_from("preview").ok();
+        }
+
         // If the force flag is not set, prompt the user for the settings
         if !self.force {
             // If the user canceled the setup, setup_result will be Some
@@ -817,6 +815,7 @@ mod tests {
         create_setup_command_with_connectors(
             deployment_name,
             mdb_version,
+            None,
             port,
             force,
             load_sample_data,
@@ -836,6 +835,7 @@ mod tests {
     fn create_setup_command_with_connectors(
         deployment_name: Option<String>,
         mdb_version: Option<MongoDBVersion>,
+        use_preview: Option<bool>,
         port: Option<u16>,
         force: bool,
         load_sample_data: Option<bool>,
@@ -852,6 +852,7 @@ mod tests {
         Setup {
             deployment_name,
             mdb_version,
+            use_preview,
             voyage_api_key,
             port,
             bind_ip_all,
@@ -1342,6 +1343,7 @@ mod tests {
         let mut setup_command = create_setup_command_with_connectors(
             Some(deployment_name.clone()),
             Some(MongoDBVersion::Major(MongoDBVersionMajor { major: 8 })),
+            None,
             Some(27017),
             true,
             Some(false),
@@ -2071,6 +2073,7 @@ mod tests {
                     patch: 2,
                 },
             )),
+            None,
             Some(27017),
             true,
             Some(false),
@@ -2144,6 +2147,7 @@ mod tests {
                     patch: 2,
                 },
             )),
+            None,
             Some(27017),
             true,
             Some(false),
@@ -2218,6 +2222,7 @@ mod tests {
                     patch: 2,
                 },
             )),
+            None,
             Some(27017),
             true,
             Some(false),
