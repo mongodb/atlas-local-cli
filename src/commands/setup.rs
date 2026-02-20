@@ -46,9 +46,33 @@ impl<T: SpinnerInteraction + SelectPrompt + InputPrompt + MultiStepSpinnerIntera
 {
 }
 
+/// Parses a string as a boolean: "true"/"1" => true, "false"/"0" => false (case-insensitive).
+fn parse_bool(s: &str) -> Result<bool> {
+    match s.to_lowercase().as_str() {
+        "true" | "1" => Ok(true),
+        "false" | "0" => Ok(false),
+        _ => anyhow::bail!("expected true or false, got '{}'", s),
+    }
+}
+
+/// Reads an environment variable as a boolean.
+/// Returns `None` if unset, `Some(true)`/`Some(false)` if set to a valid value, error if invalid.
+fn bool_from_env(key: &str) -> Result<Option<bool>> {
+    let v = match std::env::var(key) {
+        Ok(s) => s,
+        Err(std::env::VarError::NotPresent) => return Ok(None),
+        Err(e) => return Err(e.into()),
+    };
+    parse_bool(&v)
+        .map(Some)
+        .map_err(|e| anyhow::anyhow!("invalid value for {}: {}", key, e))
+}
+
 pub struct Setup {
     deployment_name: Option<String>,
     mdb_version: Option<MongoDBVersion>,
+    use_preview: Option<bool>,
+    voyage_api_key: Option<String>,
     port: Option<u16>,
     bind_ip_all: bool,
     initdb: Option<PathBuf>,
@@ -73,6 +97,8 @@ impl TryFrom<args::Setup> for Setup {
         Ok(Self {
             deployment_name: args.deployment_name,
             mdb_version: args.mdb_version,
+            use_preview: bool_from_env("MONGODB_ATLAS_LOCAL_PREVIEW")?,
+            voyage_api_key: std::env::var("MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY").ok(),
             port: args.port,
             bind_ip_all: args.bind_ip_all,
             initdb: args.initdb,
@@ -186,6 +212,16 @@ impl CommandWithOutput for Setup {
     type Output = SetupResult;
 
     async fn execute(&mut self) -> Result<Self::Output> {
+        if self.use_preview == Some(true) {
+            if self.mdb_version.is_some() {
+                return Err(anyhow::anyhow!(
+                    "MONGODB_ATLAS_LOCAL_PREVIEW=true cannot be used together with the --mdbVersion flag"
+                ));
+            }
+            // Use preview version when use_preview is true
+            self.mdb_version = MongoDBVersion::try_from("preview").ok();
+        }
+
         // If the force flag is not set, prompt the user for the settings
         if !self.force {
             // If the user canceled the setup, setup_result will be Some
@@ -218,6 +254,7 @@ impl CommandWithOutput for Setup {
             },
             image: self.image.clone(),
             skip_pull_image: Some(self.skip_pull_image),
+            voyage_api_key: self.voyage_api_key.clone(),
             ..Default::default()
         };
 
@@ -401,7 +438,6 @@ impl Setup {
             return Ok(PromptCustomSettingsResult::Canceled);
         }
 
-        // Prompt for the MongoDB version
         let prompt_mdb_version_result = self.prompt_field_with_validator(
             "Major MongoDB Version?",
             Some("latest"),
@@ -758,6 +794,7 @@ mod tests {
             runner_log_file: None,
             do_not_track: true,
             telemetry_base_url: None,
+            voyage_api_key: None,
         }
     }
 
@@ -778,6 +815,7 @@ mod tests {
         create_setup_command_with_connectors(
             deployment_name,
             mdb_version,
+            None,
             port,
             force,
             load_sample_data,
@@ -785,6 +823,7 @@ mod tests {
             initdb,
             username,
             password,
+            None,
             None,
             interaction,
             deployment_management,
@@ -796,6 +835,7 @@ mod tests {
     fn create_setup_command_with_connectors(
         deployment_name: Option<String>,
         mdb_version: Option<MongoDBVersion>,
+        use_preview: Option<bool>,
         port: Option<u16>,
         force: bool,
         load_sample_data: Option<bool>,
@@ -804,6 +844,7 @@ mod tests {
         username: Option<String>,
         password: Option<String>,
         connect_with: Option<ConnectWith>,
+        voyage_api_key: Option<String>,
         interaction: Box<dyn SetupInteraction + Send>,
         deployment_management: Box<dyn SetupDeploymentManagement + Send>,
         connectors: HashMap<ConnectWith, Box<dyn Connector + Send + Sync>>,
@@ -811,6 +852,8 @@ mod tests {
         Setup {
             deployment_name,
             mdb_version,
+            use_preview,
+            voyage_api_key,
             port,
             bind_ip_all,
             initdb,
@@ -1209,6 +1252,7 @@ mod tests {
             .return_once(move |options| {
                 assert_eq!(options.name, Some(expected_name));
                 assert_eq!(options.mongodb_version, Some(expected_version.clone()));
+                assert_eq!(options.voyage_api_key, None);
                 assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
                 assert_eq!(options.wait_until_healthy, Some(true));
                 assert_eq!(options.local_seed_location, None);
@@ -1253,6 +1297,78 @@ mod tests {
                 deployment_name: deployment_name.clone(),
                 mongodb_version: version,
                 port: 27019,
+                load_sample_data: false,
+                connect_result: Some(ConnectResult::Skipped),
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_setup_voyage_api_key_passed_to_create_deployment() {
+        let deployment_name = "voyage-test".to_string();
+        let version = Version::parse("8.0.0").unwrap();
+        let voyage_api_key = "super-secret".to_string();
+
+        let mut mock_interaction = MockInteraction::new();
+        let outcomes = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let outcomes_clone = outcomes.clone();
+        mock_interaction
+            .expect_start_multi_step_spinner()
+            .return_once(move |_| {
+                Ok(Box::new(MockMultiStepSpinner {
+                    outcomes: outcomes_clone,
+                }))
+            });
+
+        let mut mock_deployment_management = MockDocker::new();
+        let deployment = create_deployment(
+            Some(deployment_name.clone()),
+            version.clone(),
+            Some(27017),
+            Some(false),
+        );
+        let progress = create_successful_progress(deployment);
+        let expected_voyage_key = voyage_api_key.clone();
+        mock_deployment_management
+            .expect_create_deployment()
+            .return_once(move |options| {
+                assert_eq!(
+                    options.voyage_api_key,
+                    Some(expected_voyage_key),
+                    "voyage_api_key from MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY must be passed to CreateDeploymentOptions"
+                );
+                progress
+            });
+
+        let mut setup_command = create_setup_command_with_connectors(
+            Some(deployment_name.clone()),
+            Some(MongoDBVersion::Major(MongoDBVersionMajor { major: 8 })),
+            None,
+            Some(27017),
+            true,
+            Some(false),
+            false,
+            None,
+            None,
+            None,
+            None,
+            Some(voyage_api_key),
+            Box::new(mock_interaction),
+            Box::new(mock_deployment_management),
+            HashMap::new(),
+        );
+
+        let result = setup_command
+            .execute()
+            .await
+            .expect("execute should succeed");
+
+        assert_eq!(
+            result,
+            SetupResult::Setup {
+                deployment_name: deployment_name.clone(),
+                mongodb_version: version,
+                port: 27017,
                 load_sample_data: false,
                 connect_result: Some(ConnectResult::Skipped),
             }
@@ -1957,6 +2073,7 @@ mod tests {
                     patch: 2,
                 },
             )),
+            None,
             Some(27017),
             true,
             Some(false),
@@ -1965,6 +2082,7 @@ mod tests {
             None,
             None,
             Some(ConnectWith::ConnectionString),
+            None,
             Box::new(mock_interaction),
             Box::new(mock_deployment_management),
             HashMap::new(),
@@ -2029,6 +2147,7 @@ mod tests {
                     patch: 2,
                 },
             )),
+            None,
             Some(27017),
             true,
             Some(false),
@@ -2037,6 +2156,7 @@ mod tests {
             None,
             None,
             Some(ConnectWith::Compass),
+            None,
             Box::new(mock_interaction),
             Box::new(mock_deployment_management),
             connectors,
@@ -2102,6 +2222,7 @@ mod tests {
                     patch: 2,
                 },
             )),
+            None,
             Some(27017),
             true,
             Some(false),
@@ -2110,6 +2231,7 @@ mod tests {
             None,
             None,
             Some(ConnectWith::Compass),
+            None,
             Box::new(mock_interaction),
             Box::new(mock_deployment_management),
             connectors,
@@ -2302,6 +2424,43 @@ mod tests {
         let outcome = CreateDeploymentStepOutcome::Failure;
         let result = deployment_outcome_to_multi_step_spinner_outcome(outcome);
         assert!(matches!(result, MultiStepSpinnerOutcome::Failure));
+    }
+
+    #[test]
+    fn test_parse_bool_true_values() {
+        assert_eq!(parse_bool("true").unwrap(), true);
+        assert_eq!(parse_bool("TRUE").unwrap(), true);
+        assert_eq!(parse_bool("True").unwrap(), true);
+        assert_eq!(parse_bool("1").unwrap(), true);
+    }
+
+    #[test]
+    fn test_parse_bool_false_values() {
+        assert_eq!(parse_bool("false").unwrap(), false);
+        assert_eq!(parse_bool("FALSE").unwrap(), false);
+        assert_eq!(parse_bool("False").unwrap(), false);
+        assert_eq!(parse_bool("0").unwrap(), false);
+    }
+
+    #[test]
+    fn test_parse_bool_errors_on_invalid_value() {
+        let err = parse_bool("invalid").expect_err("parse_bool should error on invalid value");
+        let msg = err.to_string();
+        assert!(
+            msg.contains("expected true or false"),
+            "error message should mention expected values: {}",
+            msg
+        );
+        assert!(
+            msg.contains("invalid"),
+            "error message should mention the invalid value: {}",
+            msg
+        );
+    }
+
+    #[test]
+    fn test_parse_bool_errors_on_empty_string() {
+        parse_bool("").expect_err("parse_bool should error on empty string");
     }
     // ============================================================================
     // TryFrom Tests
