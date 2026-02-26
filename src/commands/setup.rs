@@ -22,6 +22,7 @@ use crate::{
         validators,
     },
     dependencies::{DeploymentCreator, DeploymentGetConnectionString},
+    env,
     interaction::{
         InputPrompt, InputPromptOptions, InputPromptResult, InputPromptValidator, InputValidator,
         Interaction, MultiStepSpinnerInteraction, MultiStepSpinnerOutcome, MultiStepSpinnerStep,
@@ -46,11 +47,11 @@ impl<T: SpinnerInteraction + SelectPrompt + InputPrompt + MultiStepSpinnerIntera
 {
 }
 
-/// Parses a string as a boolean: "true"/"1" => true, "false"/"0" => false (case-insensitive).
+/// Parses a string as a boolean: "true" => true, "false" => false (case-insensitive).
 fn parse_bool(s: &str) -> Result<bool> {
     match s.to_lowercase().as_str() {
-        "true" | "1" => Ok(true),
-        "false" | "0" => Ok(false),
+        "true" => Ok(true),
+        "false" => Ok(false),
         _ => anyhow::bail!("expected true or false, got '{}'", s),
     }
 }
@@ -97,8 +98,8 @@ impl TryFrom<args::Setup> for Setup {
         Ok(Self {
             deployment_name: args.deployment_name,
             mdb_version: args.mdb_version,
-            use_preview: bool_from_env("MONGODB_ATLAS_LOCAL_PREVIEW")?,
-            voyage_api_key: std::env::var("MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY").ok(),
+            use_preview: bool_from_env(env::MONGODB_ATLAS_LOCAL_PREVIEW)?,
+            voyage_api_key: std::env::var(env::MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY).ok(),
             port: args.port,
             bind_ip_all: args.bind_ip_all,
             initdb: args.initdb,
@@ -215,11 +216,12 @@ impl CommandWithOutput for Setup {
         if self.use_preview == Some(true) {
             if self.mdb_version.is_some() {
                 return Err(anyhow::anyhow!(
-                    "MONGODB_ATLAS_LOCAL_PREVIEW=true cannot be used together with the --mdbVersion flag"
+                    "{} cannot be used together with the --mdbVersion flag",
+                    env::MONGODB_ATLAS_LOCAL_PREVIEW
                 ));
             }
             // Use preview version when use_preview is true
-            self.mdb_version = MongoDBVersion::try_from("preview").ok();
+            self.mdb_version = Some(MongoDBVersion::Preview);
         }
 
         // If the force flag is not set, prompt the user for the settings
@@ -1335,7 +1337,8 @@ mod tests {
                 assert_eq!(
                     options.voyage_api_key,
                     Some(expected_voyage_key),
-                    "voyage_api_key from MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY must be passed to CreateDeploymentOptions"
+                    "voyage_api_key from {} must be passed to CreateDeploymentOptions",
+                    env::MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY
                 );
                 progress
             });

@@ -1,5 +1,7 @@
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
+use crate::env;
+
 /// Setup logging.
 /// By default, it will only show logs from our crate at the info level.
 ///
@@ -16,8 +18,8 @@ pub fn setup_logging(enable_debug: bool) {
     } else {
         // Get the log level from the environment variable.
         (
-            std::env::var("ATLAS_LOCAL_LOG").unwrap_or_else(|_| "info".to_string()),
-            std::env::var("ATLAS_LOCAL_LOG_ALL").is_ok(),
+            std::env::var(env::ATLAS_LOCAL_LOG).unwrap_or_else(|_| "info".to_string()),
+            std::env::var(env::ATLAS_LOCAL_LOG_ALL).is_ok(),
         )
     };
 
