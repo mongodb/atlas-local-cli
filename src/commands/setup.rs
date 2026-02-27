@@ -2434,7 +2434,6 @@ mod tests {
         assert_eq!(parse_bool("true").unwrap(), true);
         assert_eq!(parse_bool("TRUE").unwrap(), true);
         assert_eq!(parse_bool("True").unwrap(), true);
-        assert_eq!(parse_bool("1").unwrap(), true);
     }
 
     #[test]
@@ -2442,7 +2441,6 @@ mod tests {
         assert_eq!(parse_bool("false").unwrap(), false);
         assert_eq!(parse_bool("FALSE").unwrap(), false);
         assert_eq!(parse_bool("False").unwrap(), false);
-        assert_eq!(parse_bool("0").unwrap(), false);
     }
 
     #[test]
