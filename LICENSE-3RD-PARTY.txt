@@ -8788,7 +8788,7 @@ SOFTWARE.
 -----------------------------------------------------------------------------
                         MIT License
         applies to: 
-        - inquire 0.9.3 (https://github.com/mikaelmello/inquire)
+        - inquire 0.9.4 (https://github.com/mikaelmello/inquire)
 -----------------------------------------------------------------------------
 
 MIT License
