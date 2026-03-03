@@ -316,67 +316,29 @@ jobs:
       "id-token": "write"
       "packages": "write"
 
-  bump-atlas-cli-min-version:
-    name: Bump atlas-local MinVersion in mongodb-atlas-cli
+  custom-bump-atlas-cli-min-version:
     needs:
       - plan
       - host
-    if: ${{ needs.host.result == 'success' && !fromJson(needs.plan.outputs.val).announcement_is_prerelease }}
-    runs-on: ubuntu-22.04
+    if: ${{ !fromJson(needs.plan.outputs.val).announcement_is_prerelease || fromJson(needs.plan.outputs.val).publish_prereleases }}
+    uses: ./.github/workflows/bump-atlas-cli-min-version.yml
+    with:
+      plan: ${{ needs.plan.outputs.val }}
+    secrets: inherit
+    # publish jobs get escalated permissions
     permissions:
-      contents: write
-    steps:
-      - name: Get APIX Bot token
-        id: app-token
-        uses: mongodb/apix-action/token@6c3fde402c21942fa46cde003f190c2b23c59530
-        with:
-          app-id: ${{ secrets.APIXBOT_APP_ID }}
-          private-key: ${{ secrets.APIXBOT_APP_PEM }}
-      - name: Extract version from tag
-        id: version
-        run: |
-          TAG="${{ needs.plan.outputs.tag }}"
-          VERSION="${TAG#v}"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      - name: Checkout mongodb-atlas-cli
-        uses: actions/checkout@v4
-        with:
-          repository: mongodb/mongodb-atlas-cli
-          token: ${{ steps.app-token.outputs.token }}
-          ref: master
-      - name: Update atlas-local-plugin MinVersion
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          FILE="internal/cli/plugin/first_class.go"
-          sed -i.bak "s/AtlasLocalPluginMinVersion = \"[^\"]*\"/AtlasLocalPluginMinVersion = \"${VERSION}\"/" "$FILE"
-          rm -f "${FILE}.bak"
-      - name: Create pull request
-        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          committer: "${{ steps.app-token.outputs.user-name }} <${{ steps.app-token.outputs.user-email }}>"
-          author: "${{ steps.app-token.outputs.user-name }} <${{ steps.app-token.outputs.user-email }}>"
-          add-paths: internal/cli/plugin/first_class.go
-          title: "chore(plugin): bump atlas local plugin MinVersion to ${{ steps.version.outputs.version }}"
-          commit-message: "chore(plugin): bump atlas local plugin MinVersion to ${{ steps.version.outputs.version }}"
-          base: master
-          branch: "chore/atlas-local-plugin-min-version-${{ steps.version.outputs.version }}"
-          labels: |
-            dependencies
-          body: |
-            Bump minimum required version of the atlas local plugin to `${{ steps.version.outputs.version }}`.
-
-            Opened automatically after [atlas local plugin release ${{ needs.plan.outputs.tag }}](https://github.com/mongodb/atlas-local-cli/releases/tag/${{ needs.plan.outputs.tag }}).
+      "contents": "write"
 
   announce:
     needs:
       - plan
       - host
       - custom-sign-zip
+      - custom-bump-atlas-cli-min-version
     # use "always() && ..." to allow us to wait for all publish jobs while
     # still allowing individual publish jobs to skip themselves (for prereleases).
     # "host" however must run to completion, no skipping allowed!
-    if: ${{ always() && needs.host.result == 'success' && (needs.custom-sign-zip.result == 'skipped' || needs.custom-sign-zip.result == 'success') }}
+    if: ${{ always() && needs.host.result == 'success' && (needs.custom-sign-zip.result == 'skipped' || needs.custom-sign-zip.result == 'success') && (needs.custom-bump-atlas-cli-min-version.result == 'skipped' || needs.custom-bump-atlas-cli-min-version.result == 'success') }}
     runs-on: "ubuntu-22.04"
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
