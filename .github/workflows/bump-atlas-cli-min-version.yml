@@ -46,7 +46,7 @@ jobs:
         with:
           repository: mongodb/mongodb-atlas-cli
           token: ${{ steps.app-token.outputs.token }}
-          ref: master
+          ref: main
 
       - name: Update atlas-local-plugin MinVersion
         if: steps.parse-plan.outputs.skip != 'true'
@@ -66,7 +66,7 @@ jobs:
           add-paths: internal/cli/plugin/first_class.go
           title: "chore(plugin): bump atlas local plugin MinVersion to ${{ steps.parse-plan.outputs.version }}"
           commit-message: "chore(plugin): bump atlas local plugin MinVersion to ${{ steps.parse-plan.outputs.version }}"
-          base: master
+          base: main
           branch: "chore/atlas-local-plugin-min-version-${{ steps.parse-plan.outputs.version }}"
           labels: |
             dependencies
