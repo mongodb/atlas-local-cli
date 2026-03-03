@@ -1,3 +1,8 @@
+## [0.11.0] - 2026-03-03
+
+### 🚀 Features
+
+- Use preview tag when MONGODB_ATLAS_LOCAL_PREVIEW is set ([#40](https://github.com/mongodb/atlas-local-cli/pull/40))
 ## [0.10.0] - 2026-02-11
 
 ### 🐛 Bug Fixes
