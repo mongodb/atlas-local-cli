@@ -15,10 +15,11 @@ jobs:
     name: Bump atlas-local MinVersion in mongodb-atlas-cli
     runs-on: ubuntu-22.04
     steps:
-      - name: Parse plan and set variables
+      - name: Check prerelease and set outputs
         id: parse-plan
+        env:
+          PLAN: ${{ inputs.plan }}
         run: |
-          PLAN='${{ inputs.plan }}'
           IS_PRERELEASE=$(echo "$PLAN" | jq -r '.announcement_is_prerelease')
           if [ "$IS_PRERELEASE" = "true" ]; then
             echo "Skipping: prerelease"
@@ -72,4 +73,4 @@ jobs:
           body: |
             Bump minimum required version of the atlas local plugin to `${{ steps.parse-plan.outputs.version }}`.
 
-            Opened automatically after [atlas local plugin release ${{ steps.parse-plan.outputs.tag }}](https://github.com/mongodb/atlas-local-cli/releases/tag/${{ steps.check.outputs.tag }}).
+            Opened automatically after [atlas local plugin release ${{ steps.parse-plan.outputs.tag }}](https://github.com/mongodb/atlas-local-cli/releases/tag/${{ steps.parse-plan.outputs.tag }}).
