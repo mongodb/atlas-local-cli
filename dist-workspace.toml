@@ -26,8 +26,9 @@ install-updater = false
 # Whether to use cargo-cyclonedx to generate an SBOM
 cargo-cyclonedx = true
 # Publish jobs to run in CI
-publish-jobs = ["./sign-zip", "./bump-atlas-cli-min-version"]
-
+publish-jobs = ["./sign-zip"]
+# Post-announce jobs to run in CI
+post-announce-jobs = ["./bump-atlas-local-plugin-min-version"]
 # Add contents:write permission for publish jobs (needed to upload release assets)
 # Note: overriding removes defaults, so we include id-token and packages too
 github-custom-job-permissions = { "sign-zip" = { contents = "write", id-token = "write", packages = "write" }, "bump-atlas-cli-min-version" = { contents = "write" } }

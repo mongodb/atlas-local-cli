@@ -316,29 +316,15 @@ jobs:
       "id-token": "write"
       "packages": "write"
 
-  custom-bump-atlas-cli-min-version:
-    needs:
-      - plan
-      - host
-    if: ${{ !fromJson(needs.plan.outputs.val).announcement_is_prerelease || fromJson(needs.plan.outputs.val).publish_prereleases }}
-    uses: ./.github/workflows/bump-atlas-cli-min-version.yml
-    with:
-      plan: ${{ needs.plan.outputs.val }}
-    secrets: inherit
-    # publish jobs get escalated permissions
-    permissions:
-      "contents": "write"
-
   announce:
     needs:
       - plan
       - host
       - custom-sign-zip
-      - custom-bump-atlas-cli-min-version
     # use "always() && ..." to allow us to wait for all publish jobs while
     # still allowing individual publish jobs to skip themselves (for prereleases).
     # "host" however must run to completion, no skipping allowed!
-    if: ${{ always() && needs.host.result == 'success' && (needs.custom-sign-zip.result == 'skipped' || needs.custom-sign-zip.result == 'success') && (needs.custom-bump-atlas-cli-min-version.result == 'skipped' || needs.custom-bump-atlas-cli-min-version.result == 'success') }}
+    if: ${{ always() && needs.host.result == 'success' && (needs.custom-sign-zip.result == 'skipped' || needs.custom-sign-zip.result == 'success') }}
     runs-on: "ubuntu-22.04"
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -347,3 +333,12 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+
+  custom-bump-atlas-local-plugin-min-version:
+    needs:
+      - plan
+      - announce
+    uses: ./.github/workflows/bump-atlas-local-plugin-min-version.yml
+    with:
+      plan: ${{ needs.plan.outputs.val }}
+    secrets: inherit

@@ -1,4 +1,4 @@
-name: Bump AtlasCLI Plugin MinVersion
+name: Bump Atlas Local plugin minimal version
 
 on:
   workflow_call:
@@ -11,8 +11,8 @@ permissions:
   contents: write
 
 jobs:
-  bump-atlas-cli-min-version:
-    name: Bump atlas-local MinVersion in mongodb-atlas-cli
+  bump-atlas-local-plugin-min-version:
+    name: Bump Atlas Local plugin minimal version
     runs-on: ubuntu-22.04
     steps:
       - name: Check prerelease and set outputs
@@ -48,7 +48,7 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           ref: main
 
-      - name: Update atlas-local-plugin MinVersion
+      - name: Update Atlas Local plugin MinVersion variable
         if: steps.parse-plan.outputs.skip != 'true'
         run: |
           VERSION="${{ steps.parse-plan.outputs.version }}"
@@ -64,13 +64,13 @@ jobs:
           committer: "${{ steps.app-token.outputs.user-name }} <${{ steps.app-token.outputs.user-email }}>"
           author: "${{ steps.app-token.outputs.user-name }} <${{ steps.app-token.outputs.user-email }}>"
           add-paths: internal/cli/plugin/first_class.go
-          title: "chore(plugin): bump atlas local plugin MinVersion to ${{ steps.parse-plan.outputs.version }}"
-          commit-message: "chore(plugin): bump atlas local plugin MinVersion to ${{ steps.parse-plan.outputs.version }}"
+          title: "chore(plugin): bump Atlas Local plugin minimal version to ${{ steps.parse-plan.outputs.version }}"
+          commit-message: "chore(plugin): bump Atlas Local plugin minimal version to ${{ steps.parse-plan.outputs.version }}"
           base: main
           branch: "chore/atlas-local-plugin-min-version-${{ steps.parse-plan.outputs.version }}"
           labels: |
             dependencies
           body: |
-            Bump minimum required version of the atlas local plugin to `${{ steps.parse-plan.outputs.version }}`.
+            Bump minimum required version of the Atlas Local plugin to `${{ steps.parse-plan.outputs.version }}`.
 
-            Opened automatically after [atlas local plugin release ${{ steps.parse-plan.outputs.tag }}](https://github.com/mongodb/atlas-local-cli/releases/tag/${{ steps.parse-plan.outputs.tag }}).
+            Opened automatically after [Atlas Local plugin release ${{ steps.parse-plan.outputs.tag }}](https://github.com/mongodb/atlas-local-cli/releases/tag/${{ steps.parse-plan.outputs.tag }}).
