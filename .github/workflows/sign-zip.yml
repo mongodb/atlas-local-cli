@@ -25,10 +25,9 @@ jobs:
 
       - name: Parse plan and set variables
         id: parse-plan
+        env:
+          PLAN: ${{ inputs.plan }}
         run: |
-          # Parse the plan JSON to extract release information
-          PLAN='${{ inputs.plan }}'
-          
           # Extract release tag
           TAG=$(echo "$PLAN" | jq -r '.announcement_tag')
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"

@@ -333,3 +333,12 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+
+  custom-bump-atlas-local-plugin-min-version:
+    needs:
+      - plan
+      - announce
+    uses: ./.github/workflows/bump-atlas-local-plugin-min-version.yml
+    with:
+      plan: ${{ needs.plan.outputs.val }}
+    secrets: inherit
