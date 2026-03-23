@@ -96,9 +96,10 @@ pub struct Setup {
     #[arg(index = 1)]
     pub deployment_name: Option<String>,
 
-    /// Image tag to use for the deployment.
+    /// MongoDB version to use for the deployment.
     ///
-    /// Expected format: 'preview', 'latest', semver (e.g. 8, 8.2, 8.2.1), or semver+timestamp (e.g. 8.2.4-20260217T084055Z).
+    /// Expected format: <major>[.<minor>[.<patch>]] or 'latest'.
+    /// Some examples: 8, 8.2, 8.2.1, latest
     #[arg(long, value_parser = parse_image_tag)]
     pub mdb_version: Option<ImageTag>,
 
