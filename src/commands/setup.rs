@@ -5,9 +5,7 @@ use async_trait::async_trait;
 use atlas_local::{
     Client, CreateDeploymentError,
     client::CreateDeploymentStepOutcome,
-    models::{
-        BindingType, CreateDeploymentOptions, CreationSource, MongoDBPortBinding, MongoDBVersion,
-    },
+    models::{BindingType, CreateDeploymentOptions, CreationSource, ImageTag, MongoDBPortBinding},
 };
 use bollard::Docker;
 use semver::Version;
@@ -71,7 +69,7 @@ fn bool_from_env(key: &str) -> Result<Option<bool>> {
 
 pub struct Setup {
     deployment_name: Option<String>,
-    mdb_version: Option<MongoDBVersion>,
+    image_tag: Option<ImageTag>,
     use_preview: Option<bool>,
     voyage_api_key: Option<String>,
     port: Option<u16>,
@@ -97,7 +95,7 @@ impl TryFrom<args::Setup> for Setup {
     fn try_from(args: args::Setup) -> Result<Self> {
         Ok(Self {
             deployment_name: args.deployment_name,
-            mdb_version: args.mdb_version,
+            image_tag: args.mdb_version,
             use_preview: bool_from_env(env::MONGODB_ATLAS_LOCAL_PREVIEW)?,
             voyage_api_key: std::env::var(env::MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY).ok(),
             port: args.port,
@@ -214,14 +212,14 @@ impl CommandWithOutput for Setup {
 
     async fn execute(&mut self) -> Result<Self::Output> {
         if self.use_preview == Some(true) {
-            if self.mdb_version.is_some() {
+            if self.image_tag.is_some() {
                 return Err(anyhow::anyhow!(
                     "{} cannot be used together with the --mdbVersion flag",
                     env::MONGODB_ATLAS_LOCAL_PREVIEW
                 ));
             }
             // Use preview version when use_preview is true
-            self.mdb_version = Some(MongoDBVersion::Preview);
+            self.image_tag = Some(ImageTag::Preview);
         }
 
         // If the force flag is not set, prompt the user for the settings
@@ -236,7 +234,7 @@ impl CommandWithOutput for Setup {
         // Create the deployment
         let create_deployment_options = CreateDeploymentOptions {
             name: self.deployment_name.clone(),
-            mongodb_version: self.mdb_version.clone(),
+            image_tag: self.image_tag.clone(),
             creation_source: Some(CreationSource::AtlasLocal),
             wait_until_healthy: Some(true),
             local_seed_location: self
@@ -394,9 +392,7 @@ impl Setup {
             }
             SelectPromptResult::Selected(value) if value == SETUP_TYPE_CUSTOM => {
                 // Prompt for the custom settings (deployment name, MongoDB version, port) if one of the fields is not provided
-                if self.deployment_name.is_none()
-                    || self.mdb_version.is_none()
-                    || self.port.is_none()
+                if self.deployment_name.is_none() || self.image_tag.is_none() || self.port.is_none()
                 {
                     // Prompt for the custom settings
                     // If the user canceled the prompt, return a failed result
@@ -443,15 +439,15 @@ impl Setup {
         let prompt_mdb_version_result = self.prompt_field_with_validator(
             "Major MongoDB Version?",
             Some("latest"),
-            |setup| setup.mdb_version.as_ref().map(ToString::to_string),
-            |setup, mdb_version| {
-                setup.mdb_version =
-                    Some(MongoDBVersion::try_from(mdb_version.as_str()).map_err(|e| {
-                        anyhow::anyhow!("converting string to MongoDBVersion: {}", e)
-                    })?);
+            |setup| setup.image_tag.as_ref().map(ToString::to_string),
+            |setup, image_tag| {
+                setup.image_tag = Some(
+                    ImageTag::try_from(image_tag.as_str())
+                        .map_err(|e| anyhow::anyhow!("converting string to ImageTag: {}", e))?,
+                );
                 Ok(())
             },
-            validators::MdbVersionValidator,
+            validators::ImageTagValidator,
         )?;
 
         if let PromptCustomSettingsResult::Canceled = prompt_mdb_version_result {
@@ -683,9 +679,7 @@ mod tests {
     use atlas_local::{
         client::{CreateDeploymentProgress, CreateDeploymentStepOutcome},
         models::{
-            BindingType, CreationSource, Deployment as AtlasDeployment, MongoDBVersion,
-            MongoDBVersionMajor, MongoDBVersionMajorMinor, MongoDBVersionMajorMinorPatch,
-            MongodbType,
+            BindingType, CreationSource, Deployment as AtlasDeployment, ImageTag, MongodbType,
         },
     };
     use futures_util::FutureExt;
@@ -803,7 +797,7 @@ mod tests {
     /// Creates a Setup command with default test values
     fn create_setup_command(
         deployment_name: Option<String>,
-        mdb_version: Option<MongoDBVersion>,
+        image_tag: Option<ImageTag>,
         port: Option<u16>,
         force: bool,
         load_sample_data: Option<bool>,
@@ -816,7 +810,7 @@ mod tests {
     ) -> Setup {
         create_setup_command_with_connectors(
             deployment_name,
-            mdb_version,
+            image_tag,
             None,
             port,
             force,
@@ -836,7 +830,7 @@ mod tests {
     /// Creates a Setup command with connectors
     fn create_setup_command_with_connectors(
         deployment_name: Option<String>,
-        mdb_version: Option<MongoDBVersion>,
+        image_tag: Option<ImageTag>,
         use_preview: Option<bool>,
         port: Option<u16>,
         force: bool,
@@ -853,7 +847,7 @@ mod tests {
     ) -> Setup {
         Setup {
             deployment_name,
-            mdb_version,
+            image_tag,
             use_preview,
             voyage_api_key,
             port,
@@ -922,16 +916,12 @@ mod tests {
         );
         let progress = create_successful_progress(deployment);
         let expected_name = deployment_name.clone();
-        let expected_version = MongoDBVersion::MajorMinorPatch(MongoDBVersionMajorMinorPatch {
-            major: 8,
-            minor: 2,
-            patch: 2,
-        });
+        let expected_version = ImageTag::try_from("8.2.2").unwrap();
         mock_deployment_management
             .expect_create_deployment()
             .return_once(move |options| {
                 assert_eq!(options.name, Some(expected_name));
-                assert_eq!(options.mongodb_version, Some(expected_version.clone()));
+                assert_eq!(options.image_tag, Some(expected_version.clone()));
                 assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
                 assert_eq!(options.wait_until_healthy, Some(true));
                 assert_eq!(options.local_seed_location, None);
@@ -950,13 +940,7 @@ mod tests {
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
-            Some(MongoDBVersion::MajorMinorPatch(
-                MongoDBVersionMajorMinorPatch {
-                    major: 8,
-                    minor: 2,
-                    patch: 2,
-                },
-            )),
+            Some(ImageTag::try_from("8.2.2").unwrap()),
             Some(27017),
             true,
             Some(false),
@@ -1023,7 +1007,7 @@ mod tests {
             .expect_create_deployment()
             .return_once(move |options| {
                 assert_eq!(options.name, Some(expected_name));
-                assert_eq!(options.mongodb_version, None);
+                assert_eq!(options.image_tag, None);
                 assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
                 assert_eq!(options.wait_until_healthy, Some(true));
                 assert_eq!(options.local_seed_location, None);
@@ -1132,13 +1116,12 @@ mod tests {
         );
         let progress = create_successful_progress(deployment);
         let expected_name = deployment_name.clone();
-        let expected_version =
-            MongoDBVersion::MajorMinor(MongoDBVersionMajorMinor { major: 8, minor: 0 });
+        let expected_version = ImageTag::try_from("8.0").unwrap();
         mock_deployment_management
             .expect_create_deployment()
             .return_once(move |options| {
                 assert_eq!(options.name, Some(expected_name));
-                assert_eq!(options.mongodb_version, Some(expected_version.clone()));
+                assert_eq!(options.image_tag, Some(expected_version.clone()));
                 assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
                 assert_eq!(options.wait_until_healthy, Some(true));
                 assert_eq!(options.local_seed_location, None);
@@ -1247,13 +1230,12 @@ mod tests {
         );
         let progress = create_successful_progress(deployment);
         let expected_name = deployment_name.clone();
-        let expected_version =
-            MongoDBVersion::MajorMinor(MongoDBVersionMajorMinor { major: 8, minor: 1 });
+        let expected_version = ImageTag::try_from("8.1").unwrap();
         mock_deployment_management
             .expect_create_deployment()
             .return_once(move |options| {
                 assert_eq!(options.name, Some(expected_name));
-                assert_eq!(options.mongodb_version, Some(expected_version.clone()));
+                assert_eq!(options.image_tag, Some(expected_version.clone()));
                 assert_eq!(options.voyage_api_key, None);
                 assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
                 assert_eq!(options.wait_until_healthy, Some(true));
@@ -1273,10 +1255,7 @@ mod tests {
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
-            Some(MongoDBVersion::MajorMinor(MongoDBVersionMajorMinor {
-                major: 8,
-                minor: 1,
-            })),
+            Some(ImageTag::try_from("8.1").unwrap()),
             None,
             false,
             None,
@@ -1345,7 +1324,7 @@ mod tests {
 
         let mut setup_command = create_setup_command_with_connectors(
             Some(deployment_name.clone()),
-            Some(MongoDBVersion::Major(MongoDBVersionMajor { major: 8 })),
+            Some(ImageTag::try_from("8").unwrap()),
             None,
             Some(27017),
             true,
@@ -1420,12 +1399,12 @@ mod tests {
         );
         let progress = create_successful_progress(deployment);
         let expected_name = deployment_name.clone();
-        let expected_version = MongoDBVersion::Major(MongoDBVersionMajor { major: 8 });
+        let expected_version = ImageTag::try_from("8").unwrap();
         mock_deployment_management
             .expect_create_deployment()
             .return_once(move |options| {
                 assert_eq!(options.name, Some(expected_name));
-                assert_eq!(options.mongodb_version, Some(expected_version.clone()));
+                assert_eq!(options.image_tag, Some(expected_version.clone()));
                 assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
                 assert_eq!(options.wait_until_healthy, Some(true));
                 assert_eq!(options.local_seed_location, None);
@@ -1444,7 +1423,7 @@ mod tests {
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
-            Some(MongoDBVersion::Major(MongoDBVersionMajor { major: 8 })),
+            Some(ImageTag::try_from("8").unwrap()),
             Some(27017),
             false,
             Some(false),
@@ -1731,7 +1710,7 @@ mod tests {
             .expect_create_deployment()
             .return_once(move |options| {
                 assert_eq!(options.name, Some(expected_name));
-                assert_eq!(options.mongodb_version, None);
+                assert_eq!(options.image_tag, None);
                 assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
                 assert_eq!(options.wait_until_healthy, Some(true));
                 progress
@@ -1801,7 +1780,7 @@ mod tests {
             .expect_create_deployment()
             .return_once(move |options| {
                 assert_eq!(options.name, Some(expected_name));
-                assert_eq!(options.mongodb_version, None);
+                assert_eq!(options.image_tag, None);
                 assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
                 assert_eq!(options.wait_until_healthy, Some(true));
                 progress
@@ -1869,13 +1848,7 @@ mod tests {
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
-            Some(MongoDBVersion::MajorMinorPatch(
-                MongoDBVersionMajorMinorPatch {
-                    major: 8,
-                    minor: 2,
-                    patch: 2,
-                },
-            )),
+            Some(ImageTag::try_from("8.2.2").unwrap()),
             Some(27017),
             true,
             Some(false),
@@ -1936,13 +1909,7 @@ mod tests {
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
-            Some(MongoDBVersion::MajorMinorPatch(
-                MongoDBVersionMajorMinorPatch {
-                    major: 8,
-                    minor: 2,
-                    patch: 2,
-                },
-            )),
+            Some(ImageTag::try_from("8.2.2").unwrap()),
             Some(27017),
             true,
             Some(false),
@@ -2002,13 +1969,7 @@ mod tests {
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
-            Some(MongoDBVersion::MajorMinorPatch(
-                MongoDBVersionMajorMinorPatch {
-                    major: 8,
-                    minor: 2,
-                    patch: 2,
-                },
-            )),
+            Some(ImageTag::try_from("8.2.2").unwrap()),
             Some(27017),
             true,
             Some(false),
@@ -2069,13 +2030,7 @@ mod tests {
 
         let mut setup_command = create_setup_command_with_connectors(
             Some(deployment_name.clone()),
-            Some(MongoDBVersion::MajorMinorPatch(
-                MongoDBVersionMajorMinorPatch {
-                    major: 8,
-                    minor: 2,
-                    patch: 2,
-                },
-            )),
+            Some(ImageTag::try_from("8.2.2").unwrap()),
             None,
             Some(27017),
             true,
@@ -2143,13 +2098,7 @@ mod tests {
 
         let mut setup_command = create_setup_command_with_connectors(
             Some(deployment_name.clone()),
-            Some(MongoDBVersion::MajorMinorPatch(
-                MongoDBVersionMajorMinorPatch {
-                    major: 8,
-                    minor: 2,
-                    patch: 2,
-                },
-            )),
+            Some(ImageTag::try_from("8.2.2").unwrap()),
             None,
             Some(27017),
             true,
@@ -2218,13 +2167,7 @@ mod tests {
 
         let mut setup_command = create_setup_command_with_connectors(
             Some(deployment_name.clone()),
-            Some(MongoDBVersion::MajorMinorPatch(
-                MongoDBVersionMajorMinorPatch {
-                    major: 8,
-                    minor: 2,
-                    patch: 2,
-                },
-            )),
+            Some(ImageTag::try_from("8.2.2").unwrap()),
             None,
             Some(27017),
             true,
@@ -2304,13 +2247,7 @@ mod tests {
 
         let mut setup_command = create_setup_command(
             Some(deployment_name.clone()),
-            Some(MongoDBVersion::MajorMinorPatch(
-                MongoDBVersionMajorMinorPatch {
-                    major: 8,
-                    minor: 2,
-                    patch: 2,
-                },
-            )),
+            Some(ImageTag::try_from("8.2.2").unwrap()),
             Some(27017),
             false,
             Some(false),
@@ -2475,7 +2412,7 @@ mod tests {
         // But we're testing that the conversion logic works
         let args = args::Setup {
             deployment_name: Some("test".to_string()),
-            mdb_version: Some(MongoDBVersion::Latest),
+            mdb_version: Some(ImageTag::Latest),
             port: Some(27017),
             bind_ip_all: false,
             initdb: None,
