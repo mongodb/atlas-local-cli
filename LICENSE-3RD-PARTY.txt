@@ -2159,7 +2159,7 @@ OVERVIEW OF LICENSES:
                         Apache License 2.0
         applies to: 
         - atlas-local 0.11.0 (https://github.com/mongodb/atlas-local-cli/)
-        - atlas-local 0.5.0 (https://github.com/mongodb/atlas-local-lib)
+        - atlas-local 0.6.0 (https://github.com/mongodb/atlas-local-lib)
         - content_inspector 0.2.4 (https://github.com/sharkdp/content_inspector)
 -----------------------------------------------------------------------------
 
@@ -7816,7 +7816,7 @@ PERFORMANCE OF THIS SOFTWARE.
 -----------------------------------------------------------------------------
                         ISC License
         applies to: 
-        - rustls-webpki 0.103.9 (https://github.com/rustls/webpki)
+        - rustls-webpki 0.103.10 (https://github.com/rustls/webpki)
 -----------------------------------------------------------------------------
 
 Except as otherwise noted, this project is licensed under the following

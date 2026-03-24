@@ -114,9 +114,9 @@ dependencies = [
 
 [[package]]
 name = "atlas-local"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d1da6aceb26136a2fad05e35b47bcd04f10ad1818a6a42ab10fd26f8b2a6e52"
+checksum = "91d1b3523687302d8b50932f10ebd296c0042d105efbd333debafbdf10711d3e"
 dependencies = [
  "bollard",
  "bytes",
@@ -138,7 +138,7 @@ version = "0.11.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "atlas-local 0.5.0",
+ "atlas-local 0.6.0",
  "bollard",
  "bytes",
  "clap",
@@ -2365,9 +2365,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-webpki"
-version = "0.103.9"
+version = "0.103.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7df23109aa6c1567d1c575b9952556388da57401e4ace1d15f79eedad0d8f53"
+checksum = "df33b2b81ac578cabaf06b89b0631153a3f416b0a886e8a7a1707fb51abbd1ef"
 dependencies = [
  "ring",
  "rustls-pki-types",
