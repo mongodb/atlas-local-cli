@@ -95,7 +95,7 @@ impl TryFrom<args::Setup> for Setup {
     fn try_from(args: args::Setup) -> Result<Self> {
         Ok(Self {
             deployment_name: args.deployment_name,
-            image_tag: args.mdb_version,
+            image_tag: args.image_tag,
             use_preview: bool_from_env(env::MONGODB_ATLAS_LOCAL_PREVIEW)?,
             voyage_api_key: std::env::var(env::MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY).ok(),
             port: args.port,
@@ -2412,7 +2412,7 @@ mod tests {
         // But we're testing that the conversion logic works
         let args = args::Setup {
             deployment_name: Some("test".to_string()),
-            mdb_version: Some(ImageTag::Latest),
+            image_tag: Some(ImageTag::Latest),
             port: Some(27017),
             bind_ip_all: false,
             initdb: None,
