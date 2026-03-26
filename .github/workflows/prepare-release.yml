@@ -12,7 +12,7 @@ on:
 run-name: "Prepare release: ${{ inputs.version }}"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   update-version:
@@ -78,15 +78,11 @@ jobs:
           OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
       - name: Commit version changes
-        env:
-          GIT_USER_NAME: ${{ steps.app-token.outputs.user-name }}
-          GIT_USER_EMAIL: ${{ steps.app-token.outputs.user-email }}
-          VERSION: ${{ steps.set-version.outputs.version }}
         run: |
-          git config --global user.name "$GIT_USER_NAME"
-          git config --global user.email "$GIT_USER_EMAIL"
+          git config --global user.name "${{ steps.app-token.outputs.user-name }}"
+          git config --global user.email "${{ steps.app-token.outputs.user-email }}"
           git add Cargo.toml Cargo.lock CHANGELOG.md LICENSE-3RD-PARTY.txt
-          git commit -m "chore(release): prepare for $VERSION"
-          git tag "v$VERSION"
+          git commit -m "chore(release): prepare for ${{ steps.set-version.outputs.version }}"
+          git tag "v${{ steps.set-version.outputs.version }}"
           git push
           git push --tags
