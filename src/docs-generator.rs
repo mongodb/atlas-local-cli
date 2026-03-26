@@ -2,7 +2,7 @@ use std::{any::TypeId, collections::BTreeMap, fmt::Write, fs, path::PathBuf, tim
 
 use anyhow::{Context, Result, bail};
 use args::Cli;
-use atlas_local::models::MongoDBVersion;
+use atlas_local::models::ImageTag;
 use clap::{CommandFactory, builder::ValueParser};
 
 pub mod args;
@@ -468,7 +468,7 @@ fn try_get_flag_type(
             t if t == TypeId::of::<i64>() => Some(FlagType::Number),
             t if t == TypeId::of::<f32>() => Some(FlagType::Number),
             t if t == TypeId::of::<f64>() => Some(FlagType::Number),
-            t if t == TypeId::of::<MongoDBVersion>() => Some(FlagType::MongoDBVersion),
+            t if t == TypeId::of::<ImageTag>() => Some(FlagType::MongoDBVersion),
             t if t == TypeId::of::<PathBuf>() => Some(FlagType::Path),
             t if t == TypeId::of::<String>() => Some(FlagType::String),
             t if t == TypeId::of::<Duration>() => Some(FlagType::Duration),
