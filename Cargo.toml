@@ -16,27 +16,27 @@ anyhow = "1.0.102"
 async-trait = "0.1.89"
 atlas-local = "0.6.0"
 bollard = "0.20"
-clap = { version = "4.5.60", features = ["derive"] }
-console = "0.16.2"
-duration-str = "0.20.0"
+clap = { version = "4.6.0", features = ["derive"] }
+console = "0.16.3"
+duration-str = "0.21.0"
 futures = "0.3.32"
 indicatif = "0.18.4"
 inquire = "0.9.4"
-mongodb = "3.5.1"
+mongodb = "3.5.2"
 mongodb-atlas-cli = "0.0.2"
 semver = { version = "1.0.27", features = ["serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 thiserror = "2.0.17"
-tokio = { version = "1.48.0", features = ["full"] }
+tokio = { version = "1.50.0", features = ["full"] }
 tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 typed-builder = "0.23.2"
 url = "2.5.8"
-which = "8.0.0"
+which = "8.0.2"
 
 [target.'cfg(windows)'.dependencies]
-winreg = "0.55"
+winreg = "0.56"
 
 # The profile that 'dist' will build with
 [profile.dist]
@@ -48,8 +48,8 @@ bytes = "1.11"
 futures = "0.3.32"
 futures-util = "0.3.31"
 mockall = "0.14.0"
-trycmd = "1.0.0"
-which = "8.0.0"
+trycmd = "1.1.1"
+which = "8.0.2"
 
 [[bin]]
 name = "atlas-local-docs-generator"
