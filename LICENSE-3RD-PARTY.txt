@@ -4,8 +4,8 @@ THIRD PARTY LICENSES
 This file lists the licenses of the projects used in atlas-local-lib.
 
 OVERVIEW OF LICENSES:
-- Apache License 2.0 (291 dependencies)
-- MIT License (72 dependencies)
+- Apache License 2.0 (290 dependencies)
+- MIT License (71 dependencies)
 - Unicode License v3 (19 dependencies)
 - ISC License (4 dependencies)
 - BSD 3-Clause &quot;New&quot; or &quot;Revised&quot; License (2 dependencies)
@@ -650,7 +650,6 @@ OVERVIEW OF LICENSES:
         - derive-where 1.6.0 (https://github.com/ModProg/derive-where)
         - encode_unicode 1.0.0 (https://github.com/tormol/encode_unicode)
         - encoding_rs 0.8.35 (https://github.com/hsivonen/encoding_rs)
-        - env_home 0.1.0 (https://github.com/notpeter/env-home)
         - fragile 2.0.1 (https://github.com/mitsuhiko/fragile)
         - tinyvec 1.10.0 (https://github.com/Lokathor/tinyvec)
         - utf8_iter 1.0.4 (https://github.com/hsivonen/utf8_iter)
@@ -1110,7 +1109,7 @@ OVERVIEW OF LICENSES:
 -----------------------------------------------------------------------------
                         Apache License 2.0
         applies to: 
-        - bollard 0.20.1 (https://github.com/fussybeaver/bollard)
+        - bollard 0.20.2 (https://github.com/fussybeaver/bollard)
         - hyper-named-pipe 0.1.0 (https://github.com/fussybeaver/hyper-named-pipe)
 -----------------------------------------------------------------------------
 
@@ -2791,14 +2790,14 @@ OVERVIEW OF LICENSES:
 -----------------------------------------------------------------------------
                         Apache License 2.0
         applies to: 
-        - anstream 0.6.21 (https://github.com/rust-cli/anstyle.git)
-        - anstyle-parse 0.2.7 (https://github.com/rust-cli/anstyle.git)
+        - anstream 1.0.0 (https://github.com/rust-cli/anstyle.git)
+        - anstyle-parse 1.0.0 (https://github.com/rust-cli/anstyle.git)
         - anstyle-query 1.1.5 (https://github.com/rust-cli/anstyle.git)
         - anstyle-wincon 3.0.11 (https://github.com/rust-cli/anstyle.git)
-        - anstyle 1.0.13 (https://github.com/rust-cli/anstyle.git)
-        - clap 4.5.60 (https://github.com/clap-rs/clap)
-        - clap_builder 4.5.60 (https://github.com/clap-rs/clap)
-        - clap_derive 4.5.55 (https://github.com/clap-rs/clap)
+        - anstyle 1.0.14 (https://github.com/rust-cli/anstyle.git)
+        - clap 4.6.0 (https://github.com/clap-rs/clap)
+        - clap_builder 4.6.0 (https://github.com/clap-rs/clap)
+        - clap_derive 4.6.0 (https://github.com/clap-rs/clap)
         - clap_lex 1.0.0 (https://github.com/clap-rs/clap)
         - colorchoice 1.0.4 (https://github.com/rust-cli/anstyle.git)
         - config 0.15.19 (https://github.com/rust-cli/config-rs)
@@ -2809,15 +2808,15 @@ OVERVIEW OF LICENSES:
         - once_cell_polyfill 1.70.2 (https://github.com/polyfill-rs/once_cell_polyfill)
         - resolv-conf 0.7.6 (https://github.com/hickory-dns/resolv-conf)
         - serde_spanned 1.0.4 (https://github.com/toml-rs/toml)
-        - snapbox-macros 1.0.0 (https://github.com/assert-rs/snapbox/)
-        - snapbox 1.0.0 (https://github.com/assert-rs/snapbox/)
+        - snapbox-macros 1.1.0 (https://github.com/assert-rs/snapbox/)
+        - snapbox 1.2.0 (https://github.com/assert-rs/snapbox/)
         - stringprep 0.1.5 (https://github.com/sfackler/rust-stringprep)
         - toml 0.9.11+spec-1.1.0 (https://github.com/toml-rs/toml)
         - toml_datetime 0.7.5+spec-1.1.0 (https://github.com/toml-rs/toml)
         - toml_edit 0.23.10+spec-1.0.0 (https://github.com/toml-rs/toml)
         - toml_parser 1.0.6+spec-1.1.0 (https://github.com/toml-rs/toml)
         - toml_writer 1.0.6+spec-1.1.0 (https://github.com/toml-rs/toml)
-        - trycmd 1.0.0 (https://github.com/assert-rs/snapbox/)
+        - trycmd 1.1.1 (https://github.com/assert-rs/snapbox/)
 -----------------------------------------------------------------------------
 
                                  Apache License
@@ -5378,7 +5377,7 @@ limitations under the License.
         - ipconfig 0.3.2 (https://github.com/liranringel/ipconfig)
         - js-sys 0.3.85 (https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/js-sys)
         - lazy_static 1.5.0 (https://github.com/rust-lang-nursery/lazy-static.rs)
-        - linux-raw-sys 0.11.0 (https://github.com/sunfishcode/linux-raw-sys)
+        - linux-raw-sys 0.12.1 (https://github.com/sunfishcode/linux-raw-sys)
         - lock_api 0.4.14 (https://github.com/Amanieu/parking_lot)
         - log 0.4.29 (https://github.com/rust-lang/log)
         - maplit 1.0.2 (https://github.com/bluss/maplit)
@@ -5401,7 +5400,7 @@ limitations under the License.
         - ring 0.17.14 (https://github.com/briansmith/ring)
         - ron 0.12.0 (https://github.com/ron-rs/ron)
         - rustc_version 0.4.1 (https://github.com/djc/rustc-version-rs)
-        - rustix 1.1.3 (https://github.com/bytecodealliance/rustix)
+        - rustix 1.1.4 (https://github.com/bytecodealliance/rustix)
         - rustls 0.23.36 (https://github.com/rustls/rustls)
         - scopeguard 1.2.0 (https://github.com/bluss/scopeguard)
         - security-framework-sys 2.15.0 (https://github.com/kornelski/rust-security-framework)
@@ -5416,7 +5415,7 @@ limitations under the License.
         - socket2 0.5.10 (https://github.com/rust-lang/socket2)
         - socket2 0.6.2 (https://github.com/rust-lang/socket2)
         - stable_deref_trait 1.2.1 (https://github.com/storyyeller/stable_deref_trait)
-        - tempfile 3.24.0 (https://github.com/Stebalien/tempfile)
+        - tempfile 3.27.0 (https://github.com/Stebalien/tempfile)
         - thread_local 1.1.9 (https://github.com/Amanieu/thread_local-rs)
         - typed-builder-macro 0.22.0 (https://github.com/idanarye/rust-typed-builder)
         - typed-builder-macro 0.23.2 (https://github.com/idanarye/rust-typed-builder)
@@ -6911,20 +6910,20 @@ limitations under the License.
         - dirs 6.0.0 (https://github.com/soc/dirs-rs)
         - document-features 0.2.12 (https://github.com/slint-ui/document-features)
         - dunce 1.0.5 (https://gitlab.com/kornelski/dunce)
-        - duration-str 0.20.0 (https://github.com/baoyachi/duration-str)
+        - duration-str 0.21.0 (https://github.com/baoyachi/duration-str)
         - dyn-clone 1.0.20 (https://github.com/dtolnay/dyn-clone)
         - erased-serde 0.4.9 (https://github.com/dtolnay/erased-serde)
         - ident_case 1.0.1 (https://github.com/TedDriggs/ident_case)
         - itoa 1.0.17 (https://github.com/dtolnay/itoa)
-        - libc 0.2.180 (https://github.com/rust-lang/libc)
+        - libc 0.2.183 (https://github.com/rust-lang/libc)
         - linux-keyutils 0.2.4 (https://github.com/landhb/linux-keyutils)
         - litrs 1.0.0 (https://github.com/LukasKalbertodt/litrs)
-        - mongodb-internal-macros 3.5.1 (https://github.com/mongodb/mongo-rust-driver)
-        - mongodb 3.5.1 (https://github.com/mongodb/mongo-rust-driver)
+        - mongodb-internal-macros 3.5.2 (https://github.com/mongodb/mongo-rust-driver)
+        - mongodb 3.5.2 (https://github.com/mongodb/mongo-rust-driver)
         - pin-project-lite 0.2.16 (https://github.com/taiki-e/pin-project-lite)
         - portable-atomic 1.13.0 (https://github.com/taiki-e/portable-atomic)
         - proc-macro2 1.0.106 (https://github.com/dtolnay/proc-macro2)
-        - quote 1.0.44 (https://github.com/dtolnay/quote)
+        - quote 1.0.45 (https://github.com/dtolnay/quote)
         - r-efi 5.3.0 (https://github.com/r-efi/r-efi)
         - rand 0.10.0 (https://github.com/rust-random/rand)
         - rand 0.9.2 (https://github.com/rust-random/rand)
@@ -6941,7 +6940,7 @@ limitations under the License.
         - serde_repr 0.1.20 (https://github.com/dtolnay/serde-repr)
         - serde_urlencoded 0.7.1 (https://github.com/nox/serde_urlencoded)
         - shlex 1.3.0 (https://github.com/comex/rust-shlex)
-        - syn 2.0.114 (https://github.com/dtolnay/syn)
+        - syn 2.0.117 (https://github.com/dtolnay/syn)
         - tagptr 0.2.0 (https://github.com/oliver-giersch/tagptr.git)
         - thiserror-impl 2.0.18 (https://github.com/dtolnay/thiserror)
         - thiserror 2.0.18 (https://github.com/dtolnay/thiserror)
@@ -7898,7 +7897,7 @@ THE SOFTWARE.
                         MIT License
         applies to: 
         - winreg 0.50.0 (https://github.com/gentoo90/winreg-rs)
-        - winreg 0.55.0 (https://github.com/gentoo90/winreg-rs)
+        - winreg 0.56.0 (https://github.com/gentoo90/winreg-rs)
 -----------------------------------------------------------------------------
 
 Copyright (c) 2015 Igor Shaula
@@ -7925,7 +7924,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
                         MIT License
         applies to: 
-        - which 8.0.0 (https://github.com/harryfei/which-rs.git)
+        - which 8.0.2 (https://github.com/harryfei/which-rs.git)
 -----------------------------------------------------------------------------
 
 Copyright (c) 2015 fangyuanziti
@@ -8189,7 +8188,7 @@ SOFTWARE.
         - tracing-attributes 0.1.31 (https://github.com/tokio-rs/tracing)
         - tracing-core 0.1.36 (https://github.com/tokio-rs/tracing)
         - tracing-log 0.2.0 (https://github.com/tokio-rs/tracing)
-        - tracing-subscriber 0.3.22 (https://github.com/tokio-rs/tracing)
+        - tracing-subscriber 0.3.23 (https://github.com/tokio-rs/tracing)
         - tracing 0.1.44 (https://github.com/tokio-rs/tracing)
 -----------------------------------------------------------------------------
 
@@ -8318,32 +8317,6 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
-
------------------------------------------------------------------------------
-                        MIT License
-        applies to: 
-        - winsafe 0.0.19 (https://github.com/rodrigocfd/winsafe)
------------------------------------------------------------------------------
-
-Copyright (c) 2019-present, Rodrigo Cesar de Freitas Dias
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 
 -----------------------------------------------------------------------------
                         MIT License
@@ -8821,7 +8794,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
                         MIT License
         applies to: 
         - tokio-util 0.7.18 (https://github.com/tokio-rs/tokio)
-        - tokio 1.49.0 (https://github.com/tokio-rs/tokio)
+        - tokio 1.50.0 (https://github.com/tokio-rs/tokio)
 -----------------------------------------------------------------------------
 
 MIT License
@@ -9165,7 +9138,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
                         MIT License
         applies to: 
-        - console 0.16.2 (https://github.com/console-rs/console)
+        - console 0.16.3 (https://github.com/console-rs/console)
         - indicatif 0.18.4 (https://github.com/console-rs/indicatif)
 -----------------------------------------------------------------------------
 
