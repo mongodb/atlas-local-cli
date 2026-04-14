@@ -69,13 +69,13 @@ jobs:
       - name: Configure AWS credentials for ECR
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::901841024863:role/ecr-role-gha-ro
+          role-to-assume: ${{ vars.ECR_ROLE }}
           aws-region: us-east-1
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
         with:
-          registries: "901841024863"
+          registries: ${{ vars.ECR_REPO_ID }}
 
       - name: Sign Windows binary with garasign-jsign
         run: |
