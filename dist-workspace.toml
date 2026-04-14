@@ -26,12 +26,14 @@ install-updater = false
 # Whether to use cargo-cyclonedx to generate an SBOM
 cargo-cyclonedx = true
 # Publish jobs to run in CI
-publish-jobs = ["./sign-zip"]
+publish-jobs = ["./sign-windows-binary", "./sign-zip"]
+# Allow canary/prerelease tags to run the full publish pipeline including signing
+publish-prereleases = true
 # Post-announce jobs to run in CI
 post-announce-jobs = ["./bump-atlas-local-plugin-min-version"]
 # Add contents:write permission for publish jobs (needed to upload release assets)
 # Note: overriding removes defaults, so we include id-token and packages too
-github-custom-job-permissions = { "sign-zip" = { contents = "write", id-token = "write", packages = "write" }, "bump-atlas-cli-min-version" = { contents = "write" } }
+github-custom-job-permissions = { "sign-windows-binary" = { contents = "write", id-token = "write" }, "sign-zip" = { contents = "write", id-token = "write", packages = "write" }, "bump-atlas-cli-min-version" = { contents = "write" } }
 
 [dist.dependencies.apt]
 libdbus-1-dev = '*'
