@@ -61,6 +61,7 @@ jobs:
           mkdir -p artifacts
           cd artifacts
 
+          # Download each archive from the release
           while IFS= read -r artifact; do
             if [ -n "$artifact" ]; then
               echo "Downloading $artifact..."
@@ -119,8 +120,10 @@ jobs:
 
       - name: Import GPG key
         run: |
+          # Import the GPG private key from secrets
           echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
 
+          # Get the full fingerprint and trust the key
           FINGERPRINT=$(gpg --list-secret-keys --with-colons | grep '^fpr' | head -1 | cut -d':' -f10)
           echo "Imported key fingerprint: $FINGERPRINT"
           echo "$FINGERPRINT:6:" | gpg --import-ownertrust
@@ -129,10 +132,12 @@ jobs:
         run: |
           cd artifacts
 
+          # Sign each archive
           while IFS= read -r artifact; do
             if [ -n "$artifact" ] && [ -f "$artifact" ]; then
               echo "Signing $artifact..."
 
+              # Create detached ASCII-armored signature (.sig file)
               gpg --batch --yes --armor --detach-sign \
                 --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
                 --pinentry-mode loopback \
@@ -148,6 +153,7 @@ jobs:
 
       - name: Create public key file
         run: |
+          # Write the public key from secret to signature.asc
           echo "${{ secrets.GPG_PUBLIC_KEY }}" > artifacts/signature.asc
           echo "Created signature.asc with public key"
 
@@ -155,12 +161,14 @@ jobs:
         run: |
           cd artifacts
 
+          # Upload public key
           echo "Uploading signature.asc (public key) to release..."
           gh release upload "${{ steps.parse-plan.outputs.tag }}" \
             --repo "${{ steps.parse-plan.outputs.owner }}/${{ steps.parse-plan.outputs.repo }}" \
             "signature.asc" \
             --clobber
 
+          # Upload all artifact signature files
           for sig_file in *.tar.gz.sig *.zip.sig; do
             if [ -f "$sig_file" ]; then
               echo "Uploading $sig_file to release..."
