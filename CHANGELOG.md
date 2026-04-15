@@ -1,3 +1,20 @@
+## [0.11.1] - 2026-04-15
+
+### 🚀 Features
+
+- Bump atlas local plugin MinVersion in mongodb-atlas-cli automatically ([#44](https://github.com/mongodb/atlas-local-cli/pull/44))
+- Support image tag format for --mdb-version flag ([#50](https://github.com/mongodb/atlas-local-cli/pull/50))
+
+### 🐛 Bug Fixes
+
+- *(release)* Remove atlas-local-docs-generator from package ([#54](https://github.com/mongodb/atlas-local-cli/pull/54))
+- Update rustls-webpki to 0.103.12 (RUSTSEC-2026-0098) ([#60](https://github.com/mongodb/atlas-local-cli/pull/60))
+
+### ⚙️ Miscellaneous Tasks
+
+- Change release input to allow patch, minor, major ([#46](https://github.com/mongodb/atlas-local-cli/pull/46))
+- Use apix-bot instead of github actions to update dependabot prs ([#56](https://github.com/mongodb/atlas-local-cli/pull/56))
+- Sign windows binaries ([#57](https://github.com/mongodb/atlas-local-cli/pull/57))
 ## [0.11.0] - 2026-03-03
 
 ### 🚀 Features
