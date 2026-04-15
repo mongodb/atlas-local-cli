@@ -127,12 +127,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        rust: [stable, beta]
-        exclude:
-          # Don't run beta on all platforms to save CI time
-          - os: windows-latest
-            rust: beta
-          - os: macos-latest
+        rust: [stable]
+        include:
+          # Run beta only on Ubuntu to save CI time
+          - os: ubuntu-latest
             rust: beta
     steps:
     - uses: actions/checkout@v6
@@ -173,17 +171,13 @@ jobs:
       run: cargo test --verbose
 
     - name: Generate coverage report
-      run: cargo llvm-cov --verbose --lcov --output-path=unit-tests.lcov
-    
-    - name: Upload coverage report
-      env:
-        COVERALLS_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      uses: coverallsapp/github-action@v2.3.7
+      run: cargo llvm-cov --verbose --lcov --output-path=${{ matrix.os }}-${{ matrix.rust }}-unit-tests.lcov
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: unit-tests.lcov
-        parallel: true
-        flag-name: ${{ matrix.os }}-${{ matrix.rust }}-unit-tests
+        name: coverage-${{ matrix.os }}-${{ matrix.rust }}
+        path: ${{ matrix.os }}-${{ matrix.rust }}-unit-tests.lcov
 
   # Minimum supported Rust version check
   msrv:
@@ -266,23 +260,33 @@ jobs:
       - name: Generate coverage report
         run: cargo llvm-cov --test '*' --workspace --exclude 'src/*' --verbose --features e2e-tests --lcov --output-path=e2e-tests.lcov
 
-      - name: Upload coverage report
-        uses: coverallsapp/github-action@v2.3.7
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: e2e-tests.lcov
-          parallel: true
-          flag-name: ubuntu-latest-e2e-tests
+          name: coverage-e2e
+          path: e2e-tests.lcov
 
   coverage:
     name: Report Coverage
     runs-on: ubuntu-latest
     needs: [test-matrix, e2e-tests]
     steps:
-      - name: Send coverage
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          path: coverage
+          merge-multiple: true
+
+      - name: List coverage files
+        id: lcov-files
+        run: echo "paths=$(find coverage -name '*.lcov' | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload coverage to Coveralls
         env:
           COVERALLS_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         uses: coverallsapp/github-action@v2.3.7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          files: ${{ steps.lcov-files.outputs.paths }}
           parallel-finished: true
