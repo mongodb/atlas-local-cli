@@ -7816,7 +7816,7 @@ PERFORMANCE OF THIS SOFTWARE.
 -----------------------------------------------------------------------------
                         ISC License
         applies to: 
-        - rustls-webpki 0.103.10 (https://github.com/rustls/webpki)
+        - rustls-webpki 0.103.12 (https://github.com/rustls/webpki)
 -----------------------------------------------------------------------------
 
 Except as otherwise noted, this project is licensed under the following
