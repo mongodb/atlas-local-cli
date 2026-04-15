@@ -27,8 +27,6 @@ install-updater = false
 cargo-cyclonedx = true
 # Publish jobs to run in CI
 publish-jobs = ["./sign-zip"]
-# Allow canary/prerelease tags to run the full publish pipeline including signing
-publish-prereleases = true
 # Post-announce jobs to run in CI
 post-announce-jobs = ["./bump-atlas-local-plugin-min-version"]
 # Add contents:write permission for publish jobs (needed to upload release assets)
