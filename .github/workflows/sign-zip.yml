@@ -9,12 +9,14 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   sign-zip:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -31,29 +33,34 @@ jobs:
           # Extract release tag
           TAG=$(echo "$PLAN" | jq -r '.announcement_tag')
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          
+
           # Extract owner and repo
           OWNER=$(echo "$PLAN" | jq -r '.releases[0].hosting.github.owner')
           REPO=$(echo "$PLAN" | jq -r '.releases[0].hosting.github.repo')
           echo "owner=$OWNER" >> "$GITHUB_OUTPUT"
           echo "repo=$REPO" >> "$GITHUB_OUTPUT"
-          
+
           # Extract zip/tar.gz artifacts (executable-zip kind)
           # Filter artifacts that are executable-zip type
           ARCHIVES=$(echo "$PLAN" | jq -r '.artifacts | to_entries[] | select(.value.kind == "executable-zip") | .key')
           echo "Found archives to sign:"
           echo "$ARCHIVES"
-          
+
           # Save as multiline output
           echo "archives<<EOF" >> "$GITHUB_OUTPUT"
           echo "$ARCHIVES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
+          # Find the Windows executable-zip artifact for signing
+          WIN_ARCHIVE=$(echo "$PLAN" | jq -r '.artifacts | to_entries[] | select(.value.kind == "executable-zip") | select(.key | test("windows")) | .key')
+          echo "Windows archive: $WIN_ARCHIVE"
+          echo "win-archive=$WIN_ARCHIVE" >> "$GITHUB_OUTPUT"
+
       - name: Download release artifacts
         run: |
           mkdir -p artifacts
           cd artifacts
-          
+
           # Download each archive from the release
           while IFS= read -r artifact; do
             if [ -n "$artifact" ]; then
@@ -63,15 +70,59 @@ jobs:
                 --pattern "$artifact"
             fi
           done <<< "${{ steps.parse-plan.outputs.archives }}"
-          
+
           echo "Downloaded artifacts:"
           ls -la
+
+      - name: Configure AWS credentials for ECR
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.ECR_ROLE }}
+          aws-region: us-east-1
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: ${{ vars.ECR_REPO_ID }}
+
+      - name: Sign Windows binary with garasign-jsign
+        run: |
+          WIN_ARCHIVE="${{ steps.parse-plan.outputs.win-archive }}"
+
+          mkdir -p work/extracted
+          unzip "artifacts/$WIN_ARCHIVE" -d work/extracted/
+
+          EXE_FILE=$(find work/extracted/ -name "*.exe" | head -1)
+          echo "Signing: $EXE_FILE"
+
+          printf 'GRS_CONFIG_USER1_USERNAME=%s\nGRS_CONFIG_USER1_PASSWORD=%s\n' \
+            "${{ secrets.GRS_CONFIG_USER1_USERNAME }}" \
+            "${{ secrets.GRS_CONFIG_USER1_PASSWORD }}" > "$RUNNER_TEMP/signing-envfile"
+
+          trap 'rm -f "$RUNNER_TEMP/signing-envfile"' EXIT
+
+          docker run \
+            --env-file="$RUNNER_TEMP/signing-envfile" \
+            --rm \
+            -v "$(pwd)":"$(pwd)" \
+            -w "$(pwd)" \
+            ${{ vars.GRS_IMAGE }} \
+            /bin/bash -c "jsign --tsaurl http://timestamp.digicert.com -a ${{ vars.AUTHENTICODE_KEY_NAME }} \"$EXE_FILE\""
+
+          rm "artifacts/$WIN_ARCHIVE"
+          cd work/extracted && zip -j "../../artifacts/$WIN_ARCHIVE" ./* && cd ../..
+          echo "Repacked: artifacts/$WIN_ARCHIVE"
+
+          gh release upload "${{ steps.parse-plan.outputs.tag }}" \
+            --repo "${{ steps.parse-plan.outputs.owner }}/${{ steps.parse-plan.outputs.repo }}" \
+            "artifacts/$WIN_ARCHIVE" \
+            --clobber
 
       - name: Import GPG key
         run: |
           # Import the GPG private key from secrets
           echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
-          
+
           # Get the full fingerprint and trust the key
           FINGERPRINT=$(gpg --list-secret-keys --with-colons | grep '^fpr' | head -1 | cut -d':' -f10)
           echo "Imported key fingerprint: $FINGERPRINT"
@@ -80,23 +131,23 @@ jobs:
       - name: Sign artifacts
         run: |
           cd artifacts
-          
+
           # Sign each archive
           while IFS= read -r artifact; do
             if [ -n "$artifact" ] && [ -f "$artifact" ]; then
               echo "Signing $artifact..."
-              
+
               # Create detached ASCII-armored signature (.sig file)
               gpg --batch --yes --armor --detach-sign \
                 --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
                 --pinentry-mode loopback \
                 --output "${artifact}.sig" \
                 "$artifact"
-              
+
               echo "Created signature: ${artifact}.sig"
             fi
           done <<< "${{ steps.parse-plan.outputs.archives }}"
-          
+
           echo "Signatures created:"
           ls -la *.sig
 
@@ -109,14 +160,14 @@ jobs:
       - name: Upload signatures to release
         run: |
           cd artifacts
-          
+
           # Upload public key
           echo "Uploading signature.asc (public key) to release..."
           gh release upload "${{ steps.parse-plan.outputs.tag }}" \
             --repo "${{ steps.parse-plan.outputs.owner }}/${{ steps.parse-plan.outputs.repo }}" \
             "signature.asc" \
             --clobber
-          
+
           # Upload all artifact signature files
           for sig_file in *.tar.gz.sig *.zip.sig; do
             if [ -f "$sig_file" ]; then
@@ -127,5 +178,5 @@ jobs:
                 --clobber
             fi
           done
-          
+
           echo "All signatures uploaded successfully"
