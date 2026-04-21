@@ -1,3 +1,15 @@
+2026-04-21 9:21:15.075822 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
+^^^^^^^ a deprecated license identifier was used[0m
+2026-04-21 9:21:15.106522 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
+^^^^^^^ a deprecated license identifier was used[0m
+2026-04-21 9:21:15.492836 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
+^^^^^^^ a deprecated license identifier was used[0m
+2026-04-21 9:21:17.186055 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
+^^^^^^^ a deprecated license identifier was used[0m
+2026-04-21 9:21:17.461617 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
+^^^^^^^ a deprecated license identifier was used[0m
+2026-04-21 9:21:17.781178 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
+^^^^^^^ a deprecated license identifier was used[0m
 THIRD PARTY LICENSES
 ====================
 
@@ -2159,7 +2171,7 @@ OVERVIEW OF LICENSES:
                         Apache License 2.0
         applies to: 
         - atlas-local 0.11.1 (https://github.com/mongodb/atlas-local-cli/)
-        - atlas-local 0.6.0 (https://github.com/mongodb/atlas-local-lib)
+        - atlas-local 0.6.1 (https://github.com/mongodb/atlas-local-lib)
         - content_inspector 0.2.4 (https://github.com/sharkdp/content_inspector)
 -----------------------------------------------------------------------------
 
@@ -7236,7 +7248,7 @@ END OF TERMS AND CONDITIONS
 -----------------------------------------------------------------------------
                         Apache License 2.0
         applies to: 
-        - chrono 0.4.43 (https://github.com/chronotope/chrono)
+        - chrono 0.4.44 (https://github.com/chronotope/chrono)
 -----------------------------------------------------------------------------
 
 Rust-chrono is dual-licensed under The MIT License [1] and
