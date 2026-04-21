@@ -114,9 +114,9 @@ dependencies = [
 
 [[package]]
 name = "atlas-local"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91d1b3523687302d8b50932f10ebd296c0042d105efbd333debafbdf10711d3e"
+checksum = "b822617b3d33f3b82308f74d47a967322f58393f266645841617e9984c341ede"
 dependencies = [
  "bollard",
  "bytes",
@@ -138,7 +138,7 @@ version = "0.11.1"
 dependencies = [
  "anyhow",
  "async-trait",
- "atlas-local 0.6.0",
+ "atlas-local 0.6.1",
  "bollard",
  "bytes",
  "clap",
@@ -337,9 +337,9 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.43"
+version = "0.4.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fac4744fb15ae8337dc853fee7fb3f4e48c0fbaa23d0afe49c447b4fab126118"
+checksum = "c673075a2e0e5f4a1dde27ce9dee1ea4558c7ffe648f576438a20ca1d2acc4b0"
 dependencies = [
  "iana-time-zone",
  "js-sys",
