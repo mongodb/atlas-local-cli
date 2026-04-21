@@ -1,3 +1,12 @@
+## [0.11.2] - 2026-04-21
+
+### 🐛 Bug Fixes
+
+- Bump apix-action version and add main cli repo ([#62](https://github.com/mongodb/atlas-local-cli/pull/62))
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CODEOWNERS to apix-devtools ([#61](https://github.com/mongodb/atlas-local-cli/pull/61))
 ## [0.11.1] - 2026-04-15
 
 ### 🚀 Features
