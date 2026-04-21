@@ -1,15 +1,3 @@
-2026-04-21 9:21:15.075822 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
-^^^^^^^ a deprecated license identifier was used[0m
-2026-04-21 9:21:15.106522 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
-^^^^^^^ a deprecated license identifier was used[0m
-2026-04-21 9:21:15.492836 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
-^^^^^^^ a deprecated license identifier was used[0m
-2026-04-21 9:21:17.186055 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
-^^^^^^^ a deprecated license identifier was used[0m
-2026-04-21 9:21:17.461617 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
-^^^^^^^ a deprecated license identifier was used[0m
-2026-04-21 9:21:17.781178 +00:00:00 [[31mERROR[0m] failed to parse license 'GPL-2.0' into a valid expression: GPL-2.0
-^^^^^^^ a deprecated license identifier was used[0m
 THIRD PARTY LICENSES
 ====================
 
