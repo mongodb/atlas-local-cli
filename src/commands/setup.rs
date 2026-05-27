@@ -7,7 +7,6 @@ use atlas_local::{
     client::CreateDeploymentStepOutcome,
     models::{BindingType, CreateDeploymentOptions, CreationSource, ImageTag, MongoDBPortBinding},
 };
-use bollard::Docker;
 use semver::Version;
 use serde::Serialize;
 use tracing::debug;
@@ -110,9 +109,7 @@ impl TryFrom<args::Setup> for Setup {
             connect_with: args.connect_with,
 
             interaction: Box::new(Interaction::new()),
-            deployment_management: Box::new(Client::new(
-                Docker::connect_with_defaults().context("connecting to Docker")?,
-            )),
+            deployment_management: Box::new(Client::connect_with_defaults().context("connecting to Docker")?),
             connectors: HashMap::from([
                 (
                     ConnectWith::Compass,

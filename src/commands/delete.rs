@@ -3,7 +3,6 @@ use std::fmt::Display;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use atlas_local::{Client, DeleteDeploymentError};
-use bollard::Docker;
 use serde::Serialize;
 
 use crate::{
@@ -37,9 +36,7 @@ impl TryFrom<args::Delete> for Delete {
             force: args.force,
 
             interaction: Box::new(Interaction::new()),
-            deployment_deleter: Box::new(Client::new(
-                Docker::connect_with_defaults().context("connecting to Docker")?,
-            )),
+            deployment_deleter: Box::new(Client::connect_with_defaults().context("connecting to Docker")?),
         })
     }
 }

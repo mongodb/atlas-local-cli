@@ -7,7 +7,6 @@ use atlas_local::{
     client::WatchDeploymentError,
     models::{State, WatchOptions},
 };
-use bollard::Docker;
 use serde::Serialize;
 use tracing::debug;
 
@@ -98,7 +97,7 @@ impl TryFrom<args::Connect> for Connect {
             deployment_name: args.deployment_name,
             connector: args.connect_with,
             interaction: Box::new(Interaction::new()),
-            deployment_inspector: Box::new(Client::new(Docker::connect_with_defaults()?)),
+            deployment_inspector: Box::new(Client::connect_with_defaults()?),
             connectors: HashMap::from([
                 (
                     ConnectWith::Compass,

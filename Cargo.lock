@@ -139,7 +139,6 @@ dependencies = [
  "anyhow",
  "async-trait",
  "atlas-local 0.7.1",
- "bollard",
  "bytes",
  "clap",
  "console",

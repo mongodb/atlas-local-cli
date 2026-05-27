@@ -7,7 +7,6 @@ use atlas_local::{
     client::WatchDeploymentError,
     models::{State, WatchOptions},
 };
-use bollard::Docker;
 use serde::Serialize;
 use tracing::{debug, info, trace};
 
@@ -50,9 +49,7 @@ impl TryFrom<args::Start> for Start {
             wait_for_healthy_timeout: args.wait_for_healthy_timeout,
 
             interaction: Box::new(Interaction::new()),
-            deployment_management: Box::new(Client::new(
-                Docker::connect_with_defaults().context("connecting to Docker")?,
-            )),
+            deployment_management: Box::new(Client::connect_with_defaults().context("connecting to Docker")?),
         })
     }
 }

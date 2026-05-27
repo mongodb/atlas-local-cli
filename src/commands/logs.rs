@@ -7,7 +7,6 @@ use std::fmt::Display;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use atlas_local::{Client, models::LogsOptions};
-use bollard::Docker;
 use serde::Serialize;
 
 use crate::{args, commands::CommandWithOutput, dependencies::DeploymentLogsRetriever};
@@ -28,9 +27,7 @@ impl TryFrom<args::Logs> for Logs {
     fn try_from(args: args::Logs) -> std::result::Result<Self, Self::Error> {
         Ok(Logs {
             deployment_name: args.deployment_name,
-            deployment_logs_retriever: Box::new(Client::new(
-                Docker::connect_with_defaults().context("connecting to Docker")?,
-            )),
+            deployment_logs_retriever: Box::new(Client::connect_with_defaults().context("connecting to Docker")?),
         })
     }
 }

@@ -3,7 +3,6 @@ use std::fmt::Display;
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use atlas_local::{Client, models::State};
-use bollard::Docker;
 use serde::Serialize;
 use tracing::{debug, trace};
 
@@ -33,9 +32,7 @@ impl TryFrom<args::Stop> for Stop {
             deployment_name: args.deployment_name,
 
             interaction: Box::new(Interaction::new()),
-            deployment_management: Box::new(Client::new(
-                Docker::connect_with_defaults().context("connecting to Docker")?,
-            )),
+            deployment_management: Box::new(Client::connect_with_defaults().context("connecting to Docker")?),
         })
     }
 }
