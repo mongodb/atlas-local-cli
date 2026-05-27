@@ -162,7 +162,7 @@ mod tests {
         client::StopDeploymentError,
         models::{Deployment as AtlasDeployment, IntoDeploymentError},
     };
-    use bollard::errors::Error as BollardError;
+    use atlas_local::DockerError;
     use semver::Version;
     use std::io;
 
@@ -498,9 +498,7 @@ mod tests {
             .expect_get_deployment()
             .withf(move |name| name == &deployment_name_clone)
             .return_once(|_| {
-                Err(GetDeploymentError::ContainerInspect(BollardError::from(
-                    io::Error::new(io::ErrorKind::NotFound, "container not found"),
-                )))
+                Err(GetDeploymentError::ContainerInspect(DockerError::NotFound))
             });
 
         let mut stop_command = Stop {
@@ -518,7 +516,7 @@ mod tests {
             result,
             StopResult::Failed {
                 deployment_name: deployment_name.clone(),
-                error: "container not found".to_string()
+                error: "not found".to_string()
             }
         );
     }

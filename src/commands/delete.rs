@@ -142,7 +142,7 @@ mod tests {
     use crate::interaction::SpinnerHandle;
     use crate::interaction::mocks::MockInteraction;
     use anyhow::anyhow;
-    use bollard::errors::Error as BollardError;
+    use atlas_local::DockerError;
     use std::io;
 
     fn create_spinner_handle() -> SpinnerHandle {
@@ -325,10 +325,7 @@ mod tests {
         let mut mock_deleter = MockDocker::new();
         mock_deleter.expect_delete().return_once(|_| {
             Err(DeleteDeploymentError::GetDeployment(
-                atlas_local::GetDeploymentError::from(BollardError::from(io::Error::new(
-                    io::ErrorKind::NotFound,
-                    "deployment not found",
-                ))),
+                atlas_local::GetDeploymentError::ContainerInspect(DockerError::NotFound),
             ))
         });
 
@@ -364,9 +361,7 @@ mod tests {
 
         let mut mock_deleter = MockDocker::new();
         mock_deleter.expect_delete().return_once(|_| {
-            Err(DeleteDeploymentError::ContainerStop(BollardError::from(
-                io::Error::new(io::ErrorKind::Other, "failed to stop"),
-            )))
+            Err(DeleteDeploymentError::ContainerStop(DockerError::ServerError))
         });
 
         let mut delete_command = Delete {
@@ -401,9 +396,7 @@ mod tests {
 
         let mut mock_deleter = MockDocker::new();
         mock_deleter.expect_delete().return_once(|_| {
-            Err(DeleteDeploymentError::ContainerRemove(BollardError::from(
-                io::Error::new(io::ErrorKind::Other, "failed to remove"),
-            )))
+            Err(DeleteDeploymentError::ContainerRemove(DockerError::ServerError))
         });
 
         let mut delete_command = Delete {

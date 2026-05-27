@@ -333,8 +333,7 @@ mod tests {
         client::{StartDeploymentError, UnpauseDeploymentError, WatchDeploymentError},
         models::{Deployment as AtlasDeployment, IntoDeploymentError},
     };
-    use bollard::errors::Error as BollardError;
-    use bollard::secret::HealthStatusEnum;
+    use atlas_local::{ContainerHealthStatus, DockerError};
     use mockall::mock;
     use semver::Version;
     use std::io;
@@ -632,9 +631,7 @@ mod tests {
             .expect_get_deployment()
             .withf(move |name| name == &deployment_name_clone)
             .return_once(|_| {
-                Err(GetDeploymentError::ContainerInspect(BollardError::from(
-                    io::Error::new(io::ErrorKind::NotFound, "container not found"),
-                )))
+                Err(GetDeploymentError::ContainerInspect(DockerError::NotFound))
             });
 
         let mut connect_command = Connect {
@@ -882,10 +879,7 @@ mod tests {
             .withf(move |id| id == &container_id_for_connection)
             .return_once(|_| {
                 Err(atlas_local::GetConnectionStringError::GetDeployment(
-                    GetDeploymentError::ContainerInspect(BollardError::from(io::Error::new(
-                        io::ErrorKind::Other,
-                        "failed to get connection string",
-                    ))),
+                    GetDeploymentError::ContainerInspect(DockerError::ServerError),
                 ))
             });
 
@@ -1554,7 +1548,7 @@ mod tests {
             .return_once(|name, _| {
                 Err(WatchDeploymentError::UnhealthyDeployment {
                     deployment_name: name.to_string(),
-                    status: HealthStatusEnum::UNHEALTHY,
+                    status: ContainerHealthStatus::Unhealthy,
                 })
             });
 

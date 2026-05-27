@@ -270,8 +270,7 @@ mod tests {
         client::{StartDeploymentError, UnpauseDeploymentError, WatchDeploymentError},
         models::{Deployment as AtlasDeployment, IntoDeploymentError},
     };
-    use bollard::errors::Error as BollardError;
-    use bollard::secret::HealthStatusEnum;
+    use atlas_local::{ContainerHealthStatus, DockerError};
     use semver::Version;
     use std::io;
 
@@ -926,9 +925,7 @@ mod tests {
             .expect_get_deployment()
             .withf(move |name| name == &deployment_name_clone)
             .return_once(|_| {
-                Err(GetDeploymentError::ContainerInspect(BollardError::from(
-                    io::Error::new(io::ErrorKind::NotFound, "container not found"),
-                )))
+                Err(GetDeploymentError::ContainerInspect(DockerError::NotFound))
             });
 
         let mut start_command = Start {
@@ -948,7 +945,7 @@ mod tests {
             result,
             StartResult::Failed {
                 deployment_name: deployment_name.clone(),
-                error: "container not found".to_string()
+                error: "not found".to_string()
             }
         );
     }
@@ -1184,7 +1181,7 @@ mod tests {
             .return_once(|name, _| {
                 Err(WatchDeploymentError::UnhealthyDeployment {
                     deployment_name: name.to_string(),
-                    status: HealthStatusEnum::UNHEALTHY,
+                    status: ContainerHealthStatus::Unhealthy,
                 })
             });
 
@@ -1250,9 +1247,7 @@ mod tests {
                     && options.timeout_duration == Some(timeout_clone)
             })
             .return_once(|_, _| {
-                Err(WatchDeploymentError::ContainerInspect(BollardError::from(
-                    io::Error::new(io::ErrorKind::Other, "unexpected error"),
-                )))
+                Err(WatchDeploymentError::ContainerInspect(DockerError::ServerError))
             });
 
         let mut start_command = Start {
