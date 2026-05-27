@@ -327,12 +327,12 @@ mod tests {
     use crate::dependencies::mocks::MockDocker;
     use crate::interaction::MultiStepSpinner;
     use crate::interaction::mocks::MockInteraction;
+    use atlas_local::{ContainerHealthStatus, DockerError};
     use atlas_local::{
         GetDeploymentError,
         client::{StartDeploymentError, UnpauseDeploymentError, WatchDeploymentError},
         models::{Deployment as AtlasDeployment, IntoDeploymentError},
     };
-    use atlas_local::{ContainerHealthStatus, DockerError};
     use mockall::mock;
     use semver::Version;
     use std::io;
@@ -629,9 +629,7 @@ mod tests {
         mock_deployment_management
             .expect_get_deployment()
             .withf(move |name| name == &deployment_name_clone)
-            .return_once(|_| {
-                Err(GetDeploymentError::ContainerInspect(DockerError::NotFound))
-            });
+            .return_once(|_| Err(GetDeploymentError::ContainerInspect(DockerError::NotFound)));
 
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),

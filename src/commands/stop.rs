@@ -32,7 +32,9 @@ impl TryFrom<args::Stop> for Stop {
             deployment_name: args.deployment_name,
 
             interaction: Box::new(Interaction::new()),
-            deployment_management: Box::new(Client::connect_with_defaults().context("connecting to Docker")?),
+            deployment_management: Box::new(
+                Client::connect_with_defaults().context("connecting to Docker")?,
+            ),
         })
     }
 }
@@ -154,12 +156,12 @@ mod tests {
     use crate::dependencies::mocks::MockDocker;
     use crate::interaction::SpinnerHandle;
     use crate::interaction::mocks::MockInteraction;
+    use atlas_local::DockerError;
     use atlas_local::{
         GetDeploymentError,
         client::StopDeploymentError,
         models::{Deployment as AtlasDeployment, IntoDeploymentError},
     };
-    use atlas_local::DockerError;
     use semver::Version;
     use std::io;
 
@@ -494,9 +496,7 @@ mod tests {
         mock_deployment_management
             .expect_get_deployment()
             .withf(move |name| name == &deployment_name_clone)
-            .return_once(|_| {
-                Err(GetDeploymentError::ContainerInspect(DockerError::NotFound))
-            });
+            .return_once(|_| Err(GetDeploymentError::ContainerInspect(DockerError::NotFound)));
 
         let mut stop_command = Stop {
             deployment_name: deployment_name.clone(),

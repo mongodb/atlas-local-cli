@@ -36,7 +36,9 @@ impl TryFrom<args::Delete> for Delete {
             force: args.force,
 
             interaction: Box::new(Interaction::new()),
-            deployment_deleter: Box::new(Client::connect_with_defaults().context("connecting to Docker")?),
+            deployment_deleter: Box::new(
+                Client::connect_with_defaults().context("connecting to Docker")?,
+            ),
         })
     }
 }
@@ -358,7 +360,9 @@ mod tests {
 
         let mut mock_deleter = MockDocker::new();
         mock_deleter.expect_delete().return_once(|_| {
-            Err(DeleteDeploymentError::ContainerStop(DockerError::ServerError))
+            Err(DeleteDeploymentError::ContainerStop(
+                DockerError::ServerError,
+            ))
         });
 
         let mut delete_command = Delete {
@@ -393,7 +397,9 @@ mod tests {
 
         let mut mock_deleter = MockDocker::new();
         mock_deleter.expect_delete().return_once(|_| {
-            Err(DeleteDeploymentError::ContainerRemove(DockerError::ServerError))
+            Err(DeleteDeploymentError::ContainerRemove(
+                DockerError::ServerError,
+            ))
         });
 
         let mut delete_command = Delete {

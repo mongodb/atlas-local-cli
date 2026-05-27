@@ -49,7 +49,9 @@ impl TryFrom<args::Start> for Start {
             wait_for_healthy_timeout: args.wait_for_healthy_timeout,
 
             interaction: Box::new(Interaction::new()),
-            deployment_management: Box::new(Client::connect_with_defaults().context("connecting to Docker")?),
+            deployment_management: Box::new(
+                Client::connect_with_defaults().context("connecting to Docker")?,
+            ),
         })
     }
 }
@@ -262,12 +264,12 @@ mod tests {
     use crate::dependencies::mocks::MockDocker;
     use crate::interaction::SpinnerHandle;
     use crate::interaction::mocks::MockInteraction;
+    use atlas_local::{ContainerHealthStatus, DockerError};
     use atlas_local::{
         GetDeploymentError,
         client::{StartDeploymentError, UnpauseDeploymentError, WatchDeploymentError},
         models::{Deployment as AtlasDeployment, IntoDeploymentError},
     };
-    use atlas_local::{ContainerHealthStatus, DockerError};
     use semver::Version;
     use std::io;
 
@@ -921,9 +923,7 @@ mod tests {
         mock_deployment_management
             .expect_get_deployment()
             .withf(move |name| name == &deployment_name_clone)
-            .return_once(|_| {
-                Err(GetDeploymentError::ContainerInspect(DockerError::NotFound))
-            });
+            .return_once(|_| Err(GetDeploymentError::ContainerInspect(DockerError::NotFound)));
 
         let mut start_command = Start {
             deployment_name: deployment_name.clone(),
@@ -1244,7 +1244,9 @@ mod tests {
                     && options.timeout_duration == Some(timeout_clone)
             })
             .return_once(|_, _| {
-                Err(WatchDeploymentError::ContainerInspect(DockerError::ServerError))
+                Err(WatchDeploymentError::ContainerInspect(
+                    DockerError::ServerError,
+                ))
             });
 
         let mut start_command = Start {

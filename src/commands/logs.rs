@@ -27,7 +27,9 @@ impl TryFrom<args::Logs> for Logs {
     fn try_from(args: args::Logs) -> std::result::Result<Self, Self::Error> {
         Ok(Logs {
             deployment_name: args.deployment_name,
-            deployment_logs_retriever: Box::new(Client::connect_with_defaults().context("connecting to Docker")?),
+            deployment_logs_retriever: Box::new(
+                Client::connect_with_defaults().context("connecting to Docker")?,
+            ),
         })
     }
 }

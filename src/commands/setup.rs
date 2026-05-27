@@ -109,7 +109,9 @@ impl TryFrom<args::Setup> for Setup {
             connect_with: args.connect_with,
 
             interaction: Box::new(Interaction::new()),
-            deployment_management: Box::new(Client::connect_with_defaults().context("connecting to Docker")?),
+            deployment_management: Box::new(
+                Client::connect_with_defaults().context("connecting to Docker")?,
+            ),
             connectors: HashMap::from([
                 (
                     ConnectWith::Compass,
