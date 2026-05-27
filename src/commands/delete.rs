@@ -142,7 +142,6 @@ mod tests {
     use crate::interaction::mocks::MockInteraction;
     use anyhow::anyhow;
     use atlas_local::DockerError;
-    use std::io;
 
     fn create_spinner_handle() -> SpinnerHandle {
         SpinnerHandle::new(Box::new(|| {}))

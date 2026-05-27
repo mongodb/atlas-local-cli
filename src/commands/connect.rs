@@ -335,7 +335,6 @@ mod tests {
     };
     use mockall::mock;
     use semver::Version;
-    use std::io;
 
     mock! {
         pub Connector {}

@@ -271,7 +271,6 @@ mod tests {
         models::{Deployment as AtlasDeployment, IntoDeploymentError},
     };
     use semver::Version;
-    use std::io;
 
     fn create_spinner_handle() -> SpinnerHandle {
         SpinnerHandle::new(Box::new(|| {}))
