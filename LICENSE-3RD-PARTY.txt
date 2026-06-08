@@ -7935,7 +7935,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
                         MIT License
         applies to: 
-        - which 8.0.2 (https://github.com/harryfei/which-rs.git)
+        - which 8.0.3 (https://github.com/harryfei/which-rs.git)
 -----------------------------------------------------------------------------
 
 Copyright (c) 2015 fangyuanziti
