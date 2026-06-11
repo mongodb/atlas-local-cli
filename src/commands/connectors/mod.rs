@@ -57,3 +57,24 @@ where
 
     Ok(())
 }
+
+/// Launch a GUI connector without inheriting stderr or blocking on exit.
+///
+/// Interactive CLIs (mongosh) need inherited stdio; GUI apps such as Compass
+/// spawn Node/Electron helpers that write noisy warnings to stderr.
+async fn launch_gui<F, P>(bin: P, customizer: F) -> Result<()>
+where
+    P: AsRef<OsStr>,
+    F: FnOnce(&mut Command),
+{
+    let mut command = Command::new(bin);
+    command.stdin(Stdio::inherit());
+    command.stdout(Stdio::inherit());
+    command.stderr(Stdio::null());
+    command.envs(env::vars());
+
+    customizer(&mut command);
+    command.spawn()?;
+
+    Ok(())
+}

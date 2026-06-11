@@ -2,7 +2,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use std::path::PathBuf;
 
-use super::{Connector, DeploymentParams, launch};
+use super::{Connector, DeploymentParams, launch_gui};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Compass;
@@ -20,7 +20,7 @@ impl Connector for Compass {
     }
 
     async fn launch(&self, params: &DeploymentParams) -> Result<()> {
-        launch(compass_bin(), |command| {
+        launch_gui(compass_bin(), |command| {
             command.arg(&params.connection_string);
         })
         .await
