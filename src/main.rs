@@ -22,6 +22,7 @@ use crate::{
 mod args;
 mod commands;
 mod dependencies;
+mod env;
 mod formatting;
 mod interaction;
 mod logging;

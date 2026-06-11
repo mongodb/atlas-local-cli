@@ -8,7 +8,6 @@ use std::fmt::Display;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use atlas_local::Client;
-use bollard::Docker;
 use serde::Serialize;
 
 use crate::{
@@ -34,9 +33,9 @@ impl TryFrom<args::List> for List {
 
     fn try_from(_: args::List) -> std::result::Result<Self, Self::Error> {
         Ok(List {
-            deployment_lister: Box::new(Client::new(
-                Docker::connect_with_defaults().context("connecting to Docker")?,
-            )),
+            deployment_lister: Box::new(
+                Client::connect_with_defaults().context("connecting to Docker")?,
+            ),
         })
     }
 }
@@ -128,6 +127,7 @@ mod tests {
                 runner_log_file: None,
                 do_not_track: true,
                 telemetry_base_url: None,
+                voyage_api_key: None,
             }])
         });
 

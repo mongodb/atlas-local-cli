@@ -7,7 +7,7 @@
 
 use std::{path::PathBuf, time::Duration};
 
-use atlas_local::models::MongoDBVersion;
+use atlas_local::models::ImageTag;
 use clap::{Parser, Subcommand, ValueEnum};
 
 mod cli;
@@ -96,12 +96,11 @@ pub struct Setup {
     #[arg(index = 1)]
     pub deployment_name: Option<String>,
 
-    /// MongoDB version to use for the deployment.
+    /// Image tag to use for the deployment.
     ///
-    /// Expected format: <major>[.<minor>[.<patch>]] or 'latest'.
-    /// Some examples: 8, 8.2, 8.2.1, latest
-    #[arg(long, value_parser = parse_mdb_version)]
-    pub mdb_version: Option<MongoDBVersion>,
+    /// Expected format: 'preview', 'latest', semver (e.g. 8, 8.2, 8.2.1), or semver+timestamp (e.g. 8.2.4-20260217T084055Z).
+    #[arg(long, alias = "mdbVersion", value_parser = parse_image_tag)]
+    pub image_tag: Option<ImageTag>,
 
     /// Port that the MongoDB server listens to for client connections.
     ///
@@ -218,6 +217,6 @@ fn parse_directory(s: &str) -> Result<PathBuf, String> {
     Ok(path)
 }
 
-fn parse_mdb_version(s: &str) -> Result<MongoDBVersion, String> {
-    MongoDBVersion::try_from(s).map_err(|e| e.to_string())
+fn parse_image_tag(s: &str) -> Result<ImageTag, String> {
+    ImageTag::try_from(s).map_err(|e| e.to_string())
 }

@@ -3,7 +3,6 @@ use std::fmt::Display;
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use atlas_local::{Client, models::State};
-use bollard::Docker;
 use serde::Serialize;
 use tracing::{debug, trace};
 
@@ -33,9 +32,9 @@ impl TryFrom<args::Stop> for Stop {
             deployment_name: args.deployment_name,
 
             interaction: Box::new(Interaction::new()),
-            deployment_management: Box::new(Client::new(
-                Docker::connect_with_defaults().context("connecting to Docker")?,
-            )),
+            deployment_management: Box::new(
+                Client::connect_with_defaults().context("connecting to Docker")?,
+            ),
         })
     }
 }
@@ -157,14 +156,13 @@ mod tests {
     use crate::dependencies::mocks::MockDocker;
     use crate::interaction::SpinnerHandle;
     use crate::interaction::mocks::MockInteraction;
+    use atlas_local::DockerError;
     use atlas_local::{
         GetDeploymentError,
         client::StopDeploymentError,
         models::{Deployment as AtlasDeployment, IntoDeploymentError},
     };
-    use bollard::errors::Error as BollardError;
     use semver::Version;
-    use std::io;
 
     fn create_spinner_handle() -> SpinnerHandle {
         SpinnerHandle::new(Box::new(|| {}))
@@ -190,6 +188,7 @@ mod tests {
             runner_log_file: None,
             do_not_track: true,
             telemetry_base_url: None,
+            voyage_api_key: None,
         }
     }
 
@@ -496,11 +495,7 @@ mod tests {
         mock_deployment_management
             .expect_get_deployment()
             .withf(move |name| name == &deployment_name_clone)
-            .return_once(|_| {
-                Err(GetDeploymentError::ContainerInspect(BollardError::from(
-                    io::Error::new(io::ErrorKind::NotFound, "container not found"),
-                )))
-            });
+            .return_once(|_| Err(GetDeploymentError::ContainerInspect(DockerError::NotFound)));
 
         let mut stop_command = Stop {
             deployment_name: deployment_name.clone(),
@@ -517,7 +512,7 @@ mod tests {
             result,
             StopResult::Failed {
                 deployment_name: deployment_name.clone(),
-                error: "container not found".to_string()
+                error: "not found".to_string()
             }
         );
     }

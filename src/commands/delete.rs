@@ -3,7 +3,6 @@ use std::fmt::Display;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use atlas_local::{Client, DeleteDeploymentError};
-use bollard::Docker;
 use serde::Serialize;
 
 use crate::{
@@ -37,9 +36,9 @@ impl TryFrom<args::Delete> for Delete {
             force: args.force,
 
             interaction: Box::new(Interaction::new()),
-            deployment_deleter: Box::new(Client::new(
-                Docker::connect_with_defaults().context("connecting to Docker")?,
-            )),
+            deployment_deleter: Box::new(
+                Client::connect_with_defaults().context("connecting to Docker")?,
+            ),
         })
     }
 }
@@ -142,8 +141,7 @@ mod tests {
     use crate::interaction::SpinnerHandle;
     use crate::interaction::mocks::MockInteraction;
     use anyhow::anyhow;
-    use bollard::errors::Error as BollardError;
-    use std::io;
+    use atlas_local::DockerError;
 
     fn create_spinner_handle() -> SpinnerHandle {
         SpinnerHandle::new(Box::new(|| {}))
@@ -325,10 +323,7 @@ mod tests {
         let mut mock_deleter = MockDocker::new();
         mock_deleter.expect_delete().return_once(|_| {
             Err(DeleteDeploymentError::GetDeployment(
-                atlas_local::GetDeploymentError::from(BollardError::from(io::Error::new(
-                    io::ErrorKind::NotFound,
-                    "deployment not found",
-                ))),
+                atlas_local::GetDeploymentError::ContainerInspect(DockerError::NotFound),
             ))
         });
 
@@ -364,9 +359,9 @@ mod tests {
 
         let mut mock_deleter = MockDocker::new();
         mock_deleter.expect_delete().return_once(|_| {
-            Err(DeleteDeploymentError::ContainerStop(BollardError::from(
-                io::Error::new(io::ErrorKind::Other, "failed to stop"),
-            )))
+            Err(DeleteDeploymentError::ContainerStop(
+                DockerError::ServerError,
+            ))
         });
 
         let mut delete_command = Delete {
@@ -401,9 +396,9 @@ mod tests {
 
         let mut mock_deleter = MockDocker::new();
         mock_deleter.expect_delete().return_once(|_| {
-            Err(DeleteDeploymentError::ContainerRemove(BollardError::from(
-                io::Error::new(io::ErrorKind::Other, "failed to remove"),
-            )))
+            Err(DeleteDeploymentError::ContainerRemove(
+                DockerError::ServerError,
+            ))
         });
 
         let mut delete_command = Delete {

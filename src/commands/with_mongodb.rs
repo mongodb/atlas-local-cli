@@ -1,5 +1,4 @@
 use anyhow::{Context, Result};
-use bollard::Docker;
 use mongodb::{
     Client,
     options::{ClientOptions, ConnectionString, Credential},
@@ -71,11 +70,9 @@ async fn try_get_mongodb_client_for_local_deployment(
     password: Option<String>,
 ) -> Result<Client, TryToGetMongodbClientError> {
     // Connect to docker and create a new client.
-    let client = atlas_local::Client::new(
-        Docker::connect_with_defaults()
-            .context("connecting to docker")
-            .map_err(TryToGetMongodbClientError::ConnectingToDocker)?,
-    );
+    let client = atlas_local::Client::connect_with_defaults()
+        .context("connecting to docker")
+        .map_err(TryToGetMongodbClientError::ConnectingToDocker)?;
 
     // Get the connection string for the local deployment.
     let connection_string = client

@@ -7,7 +7,6 @@ use atlas_local::{
     client::WatchDeploymentError,
     models::{State, WatchOptions},
 };
-use bollard::Docker;
 use serde::Serialize;
 use tracing::debug;
 
@@ -98,7 +97,7 @@ impl TryFrom<args::Connect> for Connect {
             deployment_name: args.deployment_name,
             connector: args.connect_with,
             interaction: Box::new(Interaction::new()),
-            deployment_inspector: Box::new(Client::new(Docker::connect_with_defaults()?)),
+            deployment_inspector: Box::new(Client::connect_with_defaults()?),
             connectors: HashMap::from([
                 (
                     ConnectWith::Compass,
@@ -328,16 +327,14 @@ mod tests {
     use crate::dependencies::mocks::MockDocker;
     use crate::interaction::MultiStepSpinner;
     use crate::interaction::mocks::MockInteraction;
+    use atlas_local::{ContainerHealthStatus, DockerError};
     use atlas_local::{
         GetDeploymentError,
         client::{StartDeploymentError, UnpauseDeploymentError, WatchDeploymentError},
         models::{Deployment as AtlasDeployment, IntoDeploymentError},
     };
-    use bollard::errors::Error as BollardError;
-    use bollard::secret::HealthStatusEnum;
     use mockall::mock;
     use semver::Version;
-    use std::io;
 
     mock! {
         pub Connector {}
@@ -392,6 +389,7 @@ mod tests {
             runner_log_file: None,
             do_not_track: true,
             telemetry_base_url: None,
+            voyage_api_key: None,
         }
     }
 
@@ -630,11 +628,7 @@ mod tests {
         mock_deployment_management
             .expect_get_deployment()
             .withf(move |name| name == &deployment_name_clone)
-            .return_once(|_| {
-                Err(GetDeploymentError::ContainerInspect(BollardError::from(
-                    io::Error::new(io::ErrorKind::NotFound, "container not found"),
-                )))
-            });
+            .return_once(|_| Err(GetDeploymentError::ContainerInspect(DockerError::NotFound)));
 
         let mut connect_command = Connect {
             deployment_name: deployment_name.clone(),
@@ -881,10 +875,7 @@ mod tests {
             .withf(move |id| id == &container_id_for_connection)
             .return_once(|_| {
                 Err(atlas_local::GetConnectionStringError::GetDeployment(
-                    GetDeploymentError::ContainerInspect(BollardError::from(io::Error::new(
-                        io::ErrorKind::Other,
-                        "failed to get connection string",
-                    ))),
+                    GetDeploymentError::ContainerInspect(DockerError::ServerError),
                 ))
             });
 
@@ -1553,7 +1544,7 @@ mod tests {
             .return_once(|name, _| {
                 Err(WatchDeploymentError::UnhealthyDeployment {
                     deployment_name: name.to_string(),
-                    status: HealthStatusEnum::UNHEALTHY,
+                    status: ContainerHealthStatus::Unhealthy,
                 })
             });
 
