@@ -46,7 +46,7 @@ lto = "thin"
 bytes = "1.11"
 futures = "0.3.32"
 futures-util = "0.3.31"
-mockall = "0.14.0"
+mockall = "0.15.0"
 trycmd = "1.1.1"
 which = "8.0.3"
 
