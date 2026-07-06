@@ -9180,8 +9180,8 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
                         MIT License
         applies to: 
-        - console 0.16.3 (https://github.com/console-rs/console)
-        - indicatif 0.18.4 (https://github.com/console-rs/indicatif)
+        - console 0.16.4 (https://github.com/console-rs/console)
+        - indicatif 0.18.6 (https://github.com/console-rs/indicatif)
 -----------------------------------------------------------------------------
 
 The MIT License (MIT)
