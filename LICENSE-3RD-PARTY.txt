@@ -4,7 +4,7 @@ THIRD PARTY LICENSES
 This file lists the licenses of the projects used in atlas-local-lib.
 
 OVERVIEW OF LICENSES:
-- Apache License 2.0 (301 dependencies)
+- Apache License 2.0 (310 dependencies)
 - MIT License (73 dependencies)
 - Unicode License v3 (19 dependencies)
 - ISC License (4 dependencies)
@@ -647,6 +647,8 @@ OVERVIEW OF LICENSES:
 -----------------------------------------------------------------------------
                         Apache License 2.0
         applies to: 
+        - cmov 0.5.4 (https://github.com/RustCrypto/utils)
+        - ctutils 0.4.2 (https://github.com/RustCrypto/utils)
         - derive-where 1.6.0 (https://github.com/ModProg/derive-where)
         - encode_unicode 1.0.0 (https://github.com/tormol/encode_unicode)
         - encoding_rs 0.8.35 (https://github.com/hsivonen/encoding_rs)
@@ -2796,8 +2798,8 @@ OVERVIEW OF LICENSES:
         - anstyle-query 1.1.5 (https://github.com/rust-cli/anstyle.git)
         - anstyle-wincon 3.0.11 (https://github.com/rust-cli/anstyle.git)
         - anstyle 1.0.14 (https://github.com/rust-cli/anstyle.git)
-        - clap 4.6.1 (https://github.com/clap-rs/clap)
-        - clap_builder 4.6.0 (https://github.com/clap-rs/clap)
+        - clap 4.6.2 (https://github.com/clap-rs/clap)
+        - clap_builder 4.6.2 (https://github.com/clap-rs/clap)
         - clap_derive 4.6.1 (https://github.com/clap-rs/clap)
         - clap_lex 1.0.0 (https://github.com/clap-rs/clap)
         - colorchoice 1.0.4 (https://github.com/rust-cli/anstyle.git)
@@ -3240,15 +3242,15 @@ OVERVIEW OF LICENSES:
 -----------------------------------------------------------------------------
                         Apache License 2.0
         applies to: 
-        - futures-channel 0.3.32 (https://github.com/rust-lang/futures-rs)
-        - futures-core 0.3.32 (https://github.com/rust-lang/futures-rs)
-        - futures-executor 0.3.32 (https://github.com/rust-lang/futures-rs)
-        - futures-io 0.3.32 (https://github.com/rust-lang/futures-rs)
-        - futures-macro 0.3.32 (https://github.com/rust-lang/futures-rs)
-        - futures-sink 0.3.32 (https://github.com/rust-lang/futures-rs)
-        - futures-task 0.3.32 (https://github.com/rust-lang/futures-rs)
-        - futures-util 0.3.32 (https://github.com/rust-lang/futures-rs)
-        - futures 0.3.32 (https://github.com/rust-lang/futures-rs)
+        - futures-channel 0.3.33 (https://github.com/rust-lang/futures-rs)
+        - futures-core 0.3.33 (https://github.com/rust-lang/futures-rs)
+        - futures-executor 0.3.33 (https://github.com/rust-lang/futures-rs)
+        - futures-io 0.3.33 (https://github.com/rust-lang/futures-rs)
+        - futures-macro 0.3.33 (https://github.com/rust-lang/futures-rs)
+        - futures-sink 0.3.33 (https://github.com/rust-lang/futures-rs)
+        - futures-task 0.3.33 (https://github.com/rust-lang/futures-rs)
+        - futures-util 0.3.33 (https://github.com/rust-lang/futures-rs)
+        - futures 0.3.33 (https://github.com/rust-lang/futures-rs)
 -----------------------------------------------------------------------------
 
                               Apache License
@@ -3458,7 +3460,7 @@ limitations under the License.
 -----------------------------------------------------------------------------
                         Apache License 2.0
         applies to: 
-        - typenum 1.19.0 (https://github.com/paholg/typenum)
+        - typenum 1.20.1 (https://github.com/paholg/typenum)
 -----------------------------------------------------------------------------
 
                               Apache License
@@ -5861,16 +5863,22 @@ limitations under the License.
                         Apache License 2.0
         applies to: 
         - block-buffer 0.10.4 (https://github.com/RustCrypto/utils)
+        - block-buffer 0.12.1 (https://github.com/RustCrypto/utils)
         - chacha20 0.10.0 (https://github.com/RustCrypto/stream-ciphers)
+        - const-oid 0.10.2 (https://github.com/RustCrypto/formats)
         - cpufeatures 0.2.17 (https://github.com/RustCrypto/utils)
         - cpufeatures 0.3.0 (https://github.com/RustCrypto/utils)
         - crypto-common 0.1.7 (https://github.com/RustCrypto/traits)
+        - crypto-common 0.2.2 (https://github.com/RustCrypto/traits)
         - digest 0.10.7 (https://github.com/RustCrypto/traits)
-        - hmac 0.12.1 (https://github.com/RustCrypto/MACs)
-        - md-5 0.10.6 (https://github.com/RustCrypto/hashes)
-        - pbkdf2 0.12.2 (https://github.com/RustCrypto/password-hashes/tree/master/pbkdf2)
-        - sha1 0.10.6 (https://github.com/RustCrypto/hashes)
+        - digest 0.11.3 (https://github.com/RustCrypto/traits)
+        - hmac 0.13.0 (https://github.com/RustCrypto/MACs)
+        - hybrid-array 0.4.13 (https://github.com/RustCrypto/hybrid-array)
+        - md-5 0.11.0 (https://github.com/RustCrypto/hashes)
+        - pbkdf2 0.13.0 (https://github.com/RustCrypto/password-hashes)
+        - sha1 0.11.0 (https://github.com/RustCrypto/hashes)
         - sha2 0.10.9 (https://github.com/RustCrypto/hashes)
+        - sha2 0.11.0 (https://github.com/RustCrypto/hashes)
 -----------------------------------------------------------------------------
 
                               Apache License
@@ -6907,9 +6915,9 @@ limitations under the License.
                         Apache License 2.0
         applies to: 
         - android_system_properties 0.1.5 (https://github.com/nical/android_system_properties)
-        - anyhow 1.0.103 (https://github.com/dtolnay/anyhow)
+        - anyhow 1.0.104 (https://github.com/dtolnay/anyhow)
         - arraydeque 0.5.1 (https://github.com/andylokandy/arraydeque)
-        - async-trait 0.1.89 (https://github.com/dtolnay/async-trait)
+        - async-trait 0.1.91 (https://github.com/dtolnay/async-trait)
         - automod 1.0.16 (https://github.com/dtolnay/automod)
         - bollard-stubs 1.53.1-rc.29.3.1 (https://crates.io/crates/bollard-stubs)
         - dirs-sys 0.5.0 (https://github.com/dirs-dev/dirs-sys-rs)
@@ -6927,8 +6935,8 @@ limitations under the License.
         - libc 0.2.186 (https://github.com/rust-lang/libc)
         - linux-keyutils 0.2.4 (https://github.com/landhb/linux-keyutils)
         - litrs 1.0.0 (https://github.com/LukasKalbertodt/litrs)
-        - mongodb-internal-macros 3.7.0 (https://github.com/mongodb/mongo-rust-driver)
-        - mongodb 3.7.0 (https://github.com/mongodb/mongo-rust-driver)
+        - mongodb-internal-macros 3.8.0 (https://github.com/mongodb/mongo-rust-driver)
+        - mongodb 3.8.0 (https://github.com/mongodb/mongo-rust-driver)
         - ndk-context 0.1.1 (https://github.com/rust-windowing/android-ndk-rs)
         - pin-project-lite 0.2.16 (https://github.com/taiki-e/pin-project-lite)
         - portable-atomic 1.13.0 (https://github.com/taiki-e/portable-atomic)
@@ -6942,19 +6950,20 @@ limitations under the License.
         - ryu 1.0.22 (https://github.com/dtolnay/ryu)
         - semver 1.0.28 (https://github.com/dtolnay/semver)
         - serde-untagged 0.1.9 (https://github.com/dtolnay/serde-untagged)
-        - serde 1.0.228 (https://github.com/serde-rs/serde)
+        - serde 1.0.229 (https://github.com/serde-rs/serde)
         - serde_bytes 0.11.19 (https://github.com/serde-rs/bytes)
-        - serde_core 1.0.228 (https://github.com/serde-rs/serde)
-        - serde_derive 1.0.228 (https://github.com/serde-rs/serde)
-        - serde_json 1.0.150 (https://github.com/serde-rs/json)
+        - serde_core 1.0.229 (https://github.com/serde-rs/serde)
+        - serde_derive 1.0.229 (https://github.com/serde-rs/serde)
+        - serde_json 1.0.151 (https://github.com/serde-rs/json)
         - serde_repr 0.1.20 (https://github.com/dtolnay/serde-repr)
         - serde_urlencoded 0.7.1 (https://github.com/nox/serde_urlencoded)
         - shlex 1.3.0 (https://github.com/comex/rust-shlex)
         - simdutf8 0.1.5 (https://github.com/rusticstuff/simdutf8)
         - syn 2.0.117 (https://github.com/dtolnay/syn)
+        - syn 3.0.2 (https://github.com/dtolnay/syn)
         - tagptr 0.2.0 (https://github.com/oliver-giersch/tagptr.git)
-        - thiserror-impl 2.0.18 (https://github.com/dtolnay/thiserror)
-        - thiserror 2.0.18 (https://github.com/dtolnay/thiserror)
+        - thiserror-impl 2.0.19 (https://github.com/dtolnay/thiserror)
+        - thiserror 2.0.19 (https://github.com/dtolnay/thiserror)
         - time-core 0.1.8 (https://github.com/time-rs/time)
         - time-macros 0.2.27 (https://github.com/time-rs/time)
         - time 0.3.47 (https://github.com/time-rs/time)
@@ -7935,7 +7944,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
                         MIT License
         applies to: 
-        - which 8.0.4 (https://github.com/harryfei/which-rs.git)
+        - which 8.0.5 (https://github.com/harryfei/which-rs.git)
 -----------------------------------------------------------------------------
 
 Copyright (c) 2015 fangyuanziti
@@ -8019,7 +8028,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -----------------------------------------------------------------------------
                         MIT License
         applies to: 
-        - bytes 1.12.0 (https://github.com/tokio-rs/bytes)
+        - bytes 1.12.1 (https://github.com/tokio-rs/bytes)
 -----------------------------------------------------------------------------
 
 Copyright (c) 2018 Carl Lerche
@@ -9180,8 +9189,8 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
                         MIT License
         applies to: 
-        - console 0.16.3 (https://github.com/console-rs/console)
-        - indicatif 0.18.4 (https://github.com/console-rs/indicatif)
+        - console 0.16.4 (https://github.com/console-rs/console)
+        - indicatif 0.18.6 (https://github.com/console-rs/indicatif)
 -----------------------------------------------------------------------------
 
 The MIT License (MIT)
