@@ -5355,7 +5355,7 @@ limitations under the License.
         - critical-section 1.2.0 (https://github.com/rust-embedded/critical-section)
         - crossbeam-channel 0.5.15 (https://github.com/crossbeam-rs/crossbeam)
         - crossbeam-deque 0.8.6 (https://github.com/crossbeam-rs/crossbeam)
-        - crossbeam-epoch 0.9.18 (https://github.com/crossbeam-rs/crossbeam)
+        - crossbeam-epoch 0.9.20 (https://github.com/crossbeam-rs/crossbeam)
         - crossbeam-utils 0.8.21 (https://github.com/crossbeam-rs/crossbeam)
         - dbus-secret-service 4.1.0 (https://github.com/brotskydotcom/dbus-secret-service.git)
         - derive-syn-parse 0.2.0 (https://github.com/sharnoff/derive-syn-parse)
