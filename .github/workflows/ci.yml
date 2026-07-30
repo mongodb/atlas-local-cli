@@ -215,7 +215,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y curl gcc libdbus-1-dev
+          apt-get install -y curl gcc libc6-dev libdbus-1-dev
       
       - name: Install Atlas CLI
         run: |
