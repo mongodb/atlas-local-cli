@@ -14,7 +14,7 @@ generate-manifest = []
 [dependencies]
 anyhow = "1.0.102"
 async-trait = "0.1.89"
-atlas-local = { version = "0.7.1", features = ["bollard"] }
+atlas-local = { version = "0.8.0", features = ["bollard"] }
 clap = { version = "4.6.1", features = ["derive"] }
 console = "0.16.3"
 duration-str = "0.21.0"
