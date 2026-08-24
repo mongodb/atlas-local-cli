@@ -71,7 +71,13 @@ pub trait DeploymentStarter {
 #[async_trait]
 impl DeploymentStarter for Client {
     async fn start(&self, deployment_name: &str) -> Result<(), StartDeploymentError> {
-        self.start_deployment(deployment_name).await
+        self.start_deployment(
+            deployment_name,
+            atlas_local::models::StartDeploymentOptions::builder()
+                .wait_until_healthy(false)
+                .build(),
+        )
+        .await
     }
 }
 
