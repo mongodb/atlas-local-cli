@@ -283,6 +283,8 @@ mod tests {
             mongodb_version: Version::parse("8.2.2").unwrap(),
             state,
             port_bindings: None,
+            image: None,
+            image_tag: None,
             mongodb_type: atlas_local::models::MongodbType::Community,
             creation_source: None,
             local_seed_location: None,

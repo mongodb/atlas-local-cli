@@ -776,6 +776,8 @@ mod tests {
                     atlas_local::models::BindingType::Loopback,
                 )
             }),
+            image: None,
+            image_tag: None,
             mongodb_type: MongodbType::Community,
             creation_source: Some(atlas_local::models::CreationSource::AtlasLocal),
             local_seed_location: None,
