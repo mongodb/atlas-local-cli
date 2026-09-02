@@ -6934,8 +6934,8 @@ limitations under the License.
         - libc 0.2.186 (https://github.com/rust-lang/libc)
         - linux-keyutils 0.2.4 (https://github.com/landhb/linux-keyutils)
         - litrs 1.0.0 (https://github.com/LukasKalbertodt/litrs)
-        - mongodb-internal-macros 3.8.1 (https://github.com/mongodb/mongo-rust-driver)
-        - mongodb 3.8.1 (https://github.com/mongodb/mongo-rust-driver)
+        - mongodb-internal-macros 3.8.2 (https://github.com/mongodb/mongo-rust-driver)
+        - mongodb 3.8.2 (https://github.com/mongodb/mongo-rust-driver)
         - ndk-context 0.1.1 (https://github.com/rust-windowing/android-ndk-rs)
         - pin-project-lite 0.2.16 (https://github.com/taiki-e/pin-project-lite)
         - portable-atomic 1.13.0 (https://github.com/taiki-e/portable-atomic)
@@ -7943,7 +7943,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
                         MIT License
         applies to: 
-        - which 8.0.5 (https://github.com/harryfei/which-rs.git)
+        - which 8.0.6 (https://github.com/harryfei/which-rs.git)
 -----------------------------------------------------------------------------
 
 Copyright (c) 2015 fangyuanziti
