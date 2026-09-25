@@ -5615,7 +5615,7 @@ limitations under the License.
         - ron 0.12.0 (https://github.com/ron-rs/ron)
         - rustc_version 0.4.1 (https://github.com/djc/rustc-version-rs)
         - rustix 1.1.4 (https://github.com/bytecodealliance/rustix)
-        - rustls 0.23.36 (https://github.com/rustls/rustls)
+        - rustls 0.23.45 (https://github.com/rustls/rustls)
         - scopeguard 1.2.0 (https://github.com/bluss/scopeguard)
         - security-framework-sys 2.15.0 (https://github.com/kornelski/rust-security-framework)
         - security-framework 2.11.1 (https://github.com/kornelski/rust-security-framework)
@@ -8043,7 +8043,7 @@ PERFORMANCE OF THIS SOFTWARE.
 -----------------------------------------------------------------------------
                         ISC License
         applies to: 
-        - rustls-webpki 0.103.13 (https://github.com/rustls/webpki)
+        - rustls-webpki 0.103.15 (https://github.com/rustls/webpki)
 -----------------------------------------------------------------------------
 
 Except as otherwise noted, this project is licensed under the following
