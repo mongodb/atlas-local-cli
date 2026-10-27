@@ -9,10 +9,10 @@ OVERVIEW OF LICENSES:
 - Unicode License v3 (19 dependencies)
 - ISC License (4 dependencies)
 - BSD 3-Clause &quot;New&quot; or &quot;Revised&quot; License (2 dependencies)
+- zlib License (2 dependencies)
 - Creative Commons Zero v1.0 Universal (1 dependencies)
 - Community Data License Agreement Permissive 2.0 (1 dependencies)
 - Mozilla Public License 2.0 (1 dependencies)
-- zlib License (1 dependencies)
 
 -----------------------------------------------------------------------------
                         Apache License 2.0
@@ -7162,7 +7162,7 @@ limitations under the License.
         - serde_bytes 0.11.19 (https://github.com/serde-rs/bytes)
         - serde_core 1.0.229 (https://github.com/serde-rs/serde)
         - serde_derive 1.0.229 (https://github.com/serde-rs/serde)
-        - serde_json 1.0.151 (https://github.com/serde-rs/json)
+        - serde_json 1.0.154 (https://github.com/serde-rs/json)
         - serde_repr 0.1.20 (https://github.com/dtolnay/serde-repr)
         - serde_urlencoded 0.7.1 (https://github.com/nox/serde_urlencoded)
         - shlex 1.3.0 (https://github.com/comex/rust-shlex)
@@ -9022,7 +9022,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
                         MIT License
         applies to: 
         - tokio-util 0.7.18 (https://github.com/tokio-rs/tokio)
-        - tokio 1.53.3 (https://github.com/tokio-rs/tokio)
+        - tokio 1.54.1 (https://github.com/tokio-rs/tokio)
 -----------------------------------------------------------------------------
 
 MIT License
@@ -10131,6 +10131,7 @@ ICU 1.8.1 to ICU 57.1 © 1995-2016 International Business Machines Corporation a
                         zlib License
         applies to: 
         - foldhash 0.1.5 (https://github.com/orlp/foldhash)
+        - foldhash 0.2.0 (https://github.com/orlp/foldhash)
 -----------------------------------------------------------------------------
 
 Copyright (c) 2024 Orson Peters
