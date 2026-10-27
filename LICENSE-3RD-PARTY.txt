@@ -648,7 +648,7 @@ OVERVIEW OF LICENSES:
                         Apache License 2.0
         applies to: 
         - cmov 0.5.4 (https://github.com/RustCrypto/utils)
-        - ctutils 0.4.2 (https://github.com/RustCrypto/utils)
+        - ctutils 0.4.4 (https://github.com/RustCrypto/utils)
         - derive-where 1.6.0 (https://github.com/ModProg/derive-where)
         - encode_unicode 1.0.0 (https://github.com/tormol/encode_unicode)
         - encoding_rs 0.8.35 (https://github.com/hsivonen/encoding_rs)
@@ -5615,7 +5615,7 @@ limitations under the License.
         - ron 0.12.0 (https://github.com/ron-rs/ron)
         - rustc_version 0.4.1 (https://github.com/djc/rustc-version-rs)
         - rustix 1.1.4 (https://github.com/bytecodealliance/rustix)
-        - rustls 0.23.45 (https://github.com/rustls/rustls)
+        - rustls 0.23.46 (https://github.com/rustls/rustls)
         - scopeguard 1.2.0 (https://github.com/bluss/scopeguard)
         - security-framework-sys 2.15.0 (https://github.com/kornelski/rust-security-framework)
         - security-framework 2.11.1 (https://github.com/kornelski/rust-security-framework)
@@ -5628,7 +5628,7 @@ limitations under the License.
         - similar 3.1.1 (https://github.com/mitsuhiko/similar)
         - smallvec 1.15.1 (https://github.com/servo/rust-smallvec)
         - socket2 0.5.10 (https://github.com/rust-lang/socket2)
-        - socket2 0.6.2 (https://github.com/rust-lang/socket2)
+        - socket2 0.6.5 (https://github.com/rust-lang/socket2)
         - stable_deref_trait 1.2.1 (https://github.com/storyyeller/stable_deref_trait)
         - system-configuration-sys 0.6.0 (https://github.com/mullvad/system-configuration-rs)
         - system-configuration 0.7.0 (https://github.com/mullvad/system-configuration-rs)
@@ -7911,7 +7911,7 @@ express Statement of Purpose.
 -----------------------------------------------------------------------------
                         Community Data License Agreement Permissive 2.0
         applies to: 
-        - webpki-roots 1.0.5 (https://github.com/rustls/webpki-roots)
+        - webpki-roots 1.0.10 (https://github.com/rustls/webpki-roots)
 -----------------------------------------------------------------------------
 
 # Community Data License Agreement - Permissive - Version 2.0
@@ -8043,7 +8043,7 @@ PERFORMANCE OF THIS SOFTWARE.
 -----------------------------------------------------------------------------
                         ISC License
         applies to: 
-        - rustls-webpki 0.103.15 (https://github.com/rustls/webpki)
+        - rustls-webpki 0.103.16 (https://github.com/rustls/webpki)
 -----------------------------------------------------------------------------
 
 Except as otherwise noted, this project is licensed under the following
@@ -8070,7 +8070,7 @@ third-party/chromium/LICENSE.
 -----------------------------------------------------------------------------
                         MIT License
         applies to: 
-        - mio 1.1.1 (https://github.com/tokio-rs/mio)
+        - mio 1.2.4 (https://github.com/tokio-rs/mio)
 -----------------------------------------------------------------------------
 
 Copyright (c) 2014 Carl Lerche and other MIO contributors
@@ -8764,7 +8764,7 @@ SOFTWARE.
 -----------------------------------------------------------------------------
                         MIT License
         applies to: 
-        - tokio-macros 2.6.0 (https://github.com/tokio-rs/tokio)
+        - tokio-macros 2.7.2 (https://github.com/tokio-rs/tokio)
 -----------------------------------------------------------------------------
 
 MIT License
@@ -9022,7 +9022,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
                         MIT License
         applies to: 
         - tokio-util 0.7.18 (https://github.com/tokio-rs/tokio)
-        - tokio 1.50.0 (https://github.com/tokio-rs/tokio)
+        - tokio 1.53.3 (https://github.com/tokio-rs/tokio)
 -----------------------------------------------------------------------------
 
 MIT License
