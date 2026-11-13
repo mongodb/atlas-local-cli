@@ -6,6 +6,12 @@ on:
       plan:
         required: true
         type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Atlas Local plugin version to set as minimum (e.g. 0.11.2)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -19,7 +25,18 @@ jobs:
         id: parse-plan
         env:
           PLAN: ${{ inputs.plan }}
+          VERSION_INPUT: ${{ inputs.version }}
         run: |
+          if [ -n "$VERSION_INPUT" ]; then
+            if ! [[ "$VERSION_INPUT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::version must be a stable semver release (X.Y.Z), got: $VERSION_INPUT"
+              exit 1
+            fi
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "version=$VERSION_INPUT" >> "$GITHUB_OUTPUT"
+            echo "tag=v$VERSION_INPUT" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           IS_PRERELEASE=$(echo "$PLAN" | jq -r '.announcement_is_prerelease')
           if [ "$IS_PRERELEASE" = "true" ]; then
             echo "Skipping: prerelease"
@@ -48,7 +65,7 @@ jobs:
         with:
           repository: mongodb/mongodb-atlas-cli
           token: ${{ steps.app-token.outputs.token }}
-          ref: main
+          ref: master
 
       - name: Update Atlas Local plugin MinVersion variable
         if: steps.parse-plan.outputs.skip != 'true'
@@ -68,7 +85,7 @@ jobs:
           add-paths: internal/cli/plugin/first_class.go
           title: "chore(plugin): bump Atlas Local plugin minimal version to ${{ steps.parse-plan.outputs.version }}"
           commit-message: "chore(plugin): bump Atlas Local plugin minimal version to ${{ steps.parse-plan.outputs.version }}"
-          base: main
+          base: master
           branch: "chore/atlas-local-plugin-min-version-${{ steps.parse-plan.outputs.version }}"
           labels: |
             dependencies
