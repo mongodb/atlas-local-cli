@@ -392,6 +392,7 @@ mod tests {
             do_not_track: true,
             telemetry_base_url: None,
             voyage_api_key: None,
+            embedding_provider_endpoint: None,
         }
     }
 
