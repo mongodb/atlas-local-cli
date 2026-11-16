@@ -1,3 +1,30 @@
+## [0.11.3] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- Bump atlas-local to 0.7.1, drop direct bollard dependency ([#70](https://github.com/mongodb/atlas-local-cli/pull/70))
+- Suppress Compass stderr noise on connect ([#72](https://github.com/mongodb/atlas-local-cli/pull/72))
+- *(deps)* Update crossbeam-epoch ([#87](https://github.com/mongodb/atlas-local-cli/pull/87))
+- *(deps)* Resolve security audit advisories ([#118](https://github.com/mongodb/atlas-local-cli/pull/118))
+- *(deps)* Add support for embedding_provider_endpoint and 9.0 ([#119](https://github.com/mongodb/atlas-local-cli/pull/119))
+
+### 💼 Other
+
+- Target master instead of main when bumping Atlas Local Plugin Min Version on atlas-cli-core release ([#120](https://github.com/mongodb/atlas-local-cli/pull/120))
+
+### ⚙️ Miscellaneous Tasks
+
+- Add Jira automation workflows from apix-action ([#76](https://github.com/mongodb/atlas-local-cli/pull/76))
+- Apix-action updates ([#86](https://github.com/mongodb/atlas-local-cli/pull/86))
+- Apix-action updates ([#90](https://github.com/mongodb/atlas-local-cli/pull/90))
+- Apix-action updates ([#95](https://github.com/mongodb/atlas-local-cli/pull/95))
+- Apix-action updates ([#97](https://github.com/mongodb/atlas-local-cli/pull/97))
+- Apix-action updates ([#107](https://github.com/mongodb/atlas-local-cli/pull/107))
+- Move third-party license generation into the Dependabot post-update hook ([#108](https://github.com/mongodb/atlas-local-cli/pull/108))
+- Apix-action updates ([#109](https://github.com/mongodb/atlas-local-cli/pull/109))
+- Apix-action updates ([#110](https://github.com/mongodb/atlas-local-cli/pull/110))
+- Apix-action updates ([#111](https://github.com/mongodb/atlas-local-cli/pull/111))
+- Apix-action updates ([#114](https://github.com/mongodb/atlas-local-cli/pull/114))
 ## [0.11.2] - 2026-04-21
 
 ### 🐛 Bug Fixes
