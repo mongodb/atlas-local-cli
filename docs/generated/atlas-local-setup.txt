@@ -16,6 +16,8 @@ Create a local deployment.
 
 To learn more about local atlas deployments, see https://www.mongodb.com/docs/atlas/cli/current/atlas-cli-deploy-local/
 
+Set `MONGODB_ATLAS_LOCAL_DOCKER_PARAMS` to a JSON object of Docker `HostConfig` properties to pass additional options during container creation. For example: `MONGODB_ATLAS_LOCAL_DOCKER_PARAMS='{"Ulimits":[{"Name":"nofile","Soft":64000,"Hard":64000}]}' atlas local setup`. Atlas Local manages the MongoDB port binding and optional seed-data mount; use only properties supported by your Docker Engine and avoid conflicting values. If the variable is unset or empty, setup uses the default container configuration.
+
 Syntax
 ------
 

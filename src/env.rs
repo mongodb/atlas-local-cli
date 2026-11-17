@@ -8,6 +8,9 @@ pub const MONGODB_ATLAS_LOCAL_PREVIEW: &str = "MONGODB_ATLAS_LOCAL_PREVIEW";
 /// When set, it is passed to the deployment for use during index building.
 pub const MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY: &str = "MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY";
 
+/// JSON object of additional Docker HostConfig properties for `atlas local setup`.
+pub const MONGODB_ATLAS_LOCAL_DOCKER_PARAMS: &str = "MONGODB_ATLAS_LOCAL_DOCKER_PARAMS";
+
 /// Overrides the log level (e.g. "debug", "info", "warn", "error").
 /// Default is "info" when unset.
 pub const ATLAS_LOCAL_LOG: &str = "ATLAS_LOCAL_LOG";
