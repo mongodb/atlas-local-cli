@@ -19,6 +19,14 @@ The Atlas Local CLI is installed as a first-class plugin inside the Atlas CLI. T
 
 You can run the commands by running `atlas local *`
 
+For additional Docker container options, set `MONGODB_ATLAS_LOCAL_DOCKER_PARAMS` to a JSON object of Docker `HostConfig` properties. For example, to set the `nofile` ulimit:
+
+```bash
+MONGODB_ATLAS_LOCAL_DOCKER_PARAMS='{"Ulimits":[{"Name":"nofile","Soft":64000,"Hard":64000}]}' atlas local setup
+```
+
+Use properties supported by your Docker Engine and avoid overriding Atlas Local's port binding or seed-data mount. When the variable is unset or empty, setup uses the default container configuration.
+
 ## As a standalone CLI
 See the instructions on the releases page: https://github.com/mongodb/atlas-local-cli/releases/
 
@@ -55,4 +63,3 @@ cargo test
 ## License
 
 See [LICENSE](LICENSE) for details.
-
