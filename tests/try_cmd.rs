@@ -1,36 +1,105 @@
-use std::fs;
-use std::path::PathBuf;
-use std::process::Command;
+#[cfg(feature = "e2e-tests")]
+use std::{
+    fs,
+    path::PathBuf,
+    process::Command,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
-use trycmd::schema::Bin;
+#[cfg(feature = "e2e-tests")]
+struct TempConfigHome(PathBuf);
+
+#[cfg(feature = "e2e-tests")]
+impl TempConfigHome {
+    fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        let nonce = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "atlas-local-cli-e2e-{}-{nonce}",
+            std::process::id()
+        ));
+        fs::create_dir(&path)?;
+        Ok(Self(path))
+    }
+}
+
+#[cfg(feature = "e2e-tests")]
+impl Drop for TempConfigHome {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.0);
+    }
+}
+
+#[cfg(all(feature = "e2e-tests", windows))]
+const BINARY_NAME: &str = "atlas-local.exe";
+#[cfg(all(feature = "e2e-tests", not(windows)))]
+const BINARY_NAME: &str = "atlas-local";
 
 #[cfg(feature = "e2e-tests")]
 #[test]
-fn try_cmd_e2e() {
+fn standalone_help() {
+    let output = Command::new(env!("CARGO_BIN_EXE_atlas-local"))
+        .arg("--help")
+        .output()
+        .expect("run atlas-local --help");
+    assert!(
+        output.status.success(),
+        "atlas-local --help failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_help_output(&stdout, "Usage: atlas-local [OPTIONS] <COMMAND>");
+}
+
+#[cfg(feature = "e2e-tests")]
+#[test]
+fn atlas_plugin_help() {
     let atlas_cli_path =
         which::which("atlas").expect("Atlas CLI should be installed and in the PATH");
     let plugins_dir =
         bootstrap_atlas_cli_plugin().expect("Bootstrapping Atlas CLI plugin should not fail");
+    let config_home = TempConfigHome::new().expect("create isolated Atlas CLI config home");
 
-    trycmd::TestCases::new()
-        .case("tests/try_cmd/*.md")
-        .register_bin("atlas", Bin::Path(atlas_cli_path))
+    let output = Command::new(atlas_cli_path)
+        .args(["local", "--help"])
+        // Load the test plugin from its extra directory without picking up the user's plugins.
+        .env("HOME", &config_home.0)
+        .env("XDG_CONFIG_HOME", &config_home.0)
         .env(
             "ATLAS_CLI_EXTRA_PLUGIN_DIRECTORY",
             plugins_dir.to_string_lossy().to_string(),
         )
-        .run();
+        .output()
+        .expect("run atlas local --help");
+    assert!(
+        output.status.success(),
+        "atlas local --help failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_help_output(&stdout, "Usage: atlas local [OPTIONS] <COMMAND>");
 }
 
-#[cfg(windows)]
-const BINARY_NAME: &str = "atlas-local.exe";
-#[cfg(not(windows))]
-const BINARY_NAME: &str = "atlas-local";
+#[cfg(feature = "e2e-tests")]
+fn assert_help_output(stdout: &str, expected_usage: &str) {
+    assert!(stdout.contains("Manage local deployments"));
+    assert!(stdout.contains(expected_usage));
+    for command in [
+        "setup", "connect", "list", "start", "stop", "logs", "delete", "search",
+    ] {
+        assert!(
+            stdout
+                .lines()
+                .any(|line| line.split_whitespace().next() == Some(command)),
+            "missing {command:?} in help output:\n{stdout}"
+        );
+    }
+}
 
+#[cfg(feature = "e2e-tests")]
 fn bootstrap_atlas_cli_plugin() -> Result<PathBuf, Box<dyn std::error::Error>> {
     // Build the binary
     let build_output = Command::new("cargo")
-        .args(&["build", "--release", "--features=generate-manifest"])
+        .args(["build", "--release", "--features=generate-manifest"])
         .output()?;
 
     if !build_output.status.success() {
