@@ -1,33 +1,5 @@
 #[cfg(feature = "e2e-tests")]
-use std::{
-    fs,
-    path::PathBuf,
-    process::Command,
-    time::{SystemTime, UNIX_EPOCH},
-};
-
-#[cfg(feature = "e2e-tests")]
-struct TempConfigHome(PathBuf);
-
-#[cfg(feature = "e2e-tests")]
-impl TempConfigHome {
-    fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let nonce = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "atlas-local-cli-e2e-{}-{nonce}",
-            std::process::id()
-        ));
-        fs::create_dir(&path)?;
-        Ok(Self(path))
-    }
-}
-
-#[cfg(feature = "e2e-tests")]
-impl Drop for TempConfigHome {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
-    }
-}
+use std::{fs, path::PathBuf, process::Command};
 
 #[cfg(all(feature = "e2e-tests", windows))]
 const BINARY_NAME: &str = "atlas-local.exe";
@@ -57,13 +29,9 @@ fn atlas_plugin_help() {
         which::which("atlas").expect("Atlas CLI should be installed and in the PATH");
     let plugins_dir =
         bootstrap_atlas_cli_plugin().expect("Bootstrapping Atlas CLI plugin should not fail");
-    let config_home = TempConfigHome::new().expect("create isolated Atlas CLI config home");
 
     let output = Command::new(atlas_cli_path)
         .args(["local", "--help"])
-        // Load the test plugin from its extra directory without picking up the user's plugins.
-        .env("HOME", &config_home.0)
-        .env("XDG_CONFIG_HOME", &config_home.0)
         .env(
             "ATLAS_CLI_EXTRA_PLUGIN_DIRECTORY",
             plugins_dir.to_string_lossy().to_string(),
