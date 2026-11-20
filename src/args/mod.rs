@@ -220,3 +220,16 @@ fn parse_directory(s: &str) -> Result<PathBuf, String> {
 fn parse_image_tag(s: &str) -> Result<ImageTag, String> {
     ImageTag::try_from(s).map_err(|e| e.to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+
+    use super::parse_duration;
+
+    #[test]
+    fn parses_duration_without_optional_features() {
+        assert_eq!(parse_duration("10m"), Ok(Duration::from_secs(600)));
+        assert!(parse_duration("invalid").is_err());
+    }
+}
