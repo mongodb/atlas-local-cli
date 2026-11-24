@@ -2154,8 +2154,8 @@ OVERVIEW OF LICENSES:
 -----------------------------------------------------------------------------
                         Apache License 2.0
         applies to: 
-        - atlas-local 0.11.3 (https://github.com/mongodb/atlas-local-cli/)
         - atlas-local 0.10.0 (https://github.com/mongodb/atlas-local-lib)
+        - atlas-local 0.11.3 (https://github.com/mongodb/atlas-local-cli/)
 -----------------------------------------------------------------------------
 
                                  Apache License
@@ -5143,7 +5143,7 @@ limitations under the License.
         - errno 0.3.14 (https://github.com/lambda-fairy/rust-errno)
         - find-msvc-tools 0.1.8 (https://github.com/rust-lang/cc-rs)
         - fnv 1.0.7 (https://github.com/servo/rust-fnv)
-        - form_urlencoded 1.2.2 (https://github.com/servo/rust-url)
+        - form_urlencoded 1.2.3 (https://github.com/servo/rust-url)
         - hashbrown 0.15.5 (https://github.com/rust-lang/hashbrown)
         - hashbrown 0.16.1 (https://github.com/rust-lang/hashbrown)
         - heck 0.5.0 (https://github.com/withoutboats/heck)
@@ -5203,7 +5203,7 @@ limitations under the License.
         - unicode-properties 0.1.4 (https://github.com/unicode-rs/unicode-properties)
         - unicode-segmentation 1.12.0 (https://github.com/unicode-rs/unicode-segmentation)
         - unicode-width 0.2.2 (https://github.com/unicode-rs/unicode-width)
-        - url 2.5.8 (https://github.com/servo/rust-url)
+        - url 2.5.9 (https://github.com/servo/rust-url)
         - uuid 1.20.0 (https://github.com/uuid-rs/uuid)
         - version_check 0.9.5 (https://github.com/SergioBenitez/version_check)
         - wasi 0.11.1+wasi-snapshot-preview1 (https://github.com/bytecodealliance/wasi)
