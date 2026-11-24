@@ -25,7 +25,7 @@ For additional Docker container options, set `MONGODB_ATLAS_LOCAL_DOCKER_PARAMS`
 MONGODB_ATLAS_LOCAL_DOCKER_PARAMS='{"Ulimits":[{"Name":"nofile","Soft":64000,"Hard":64000}]}' atlas local setup
 ```
 
-Use properties supported by your Docker Engine and avoid overriding Atlas Local's port binding or seed-data mount. When the variable is unset or empty, setup uses the default container configuration.
+Provided `PortBindings` and `Binds` replace Atlas Local's generated values. Omit either property or set it to `null` to keep its default. Other `HostConfig` fields are passed through.
 
 ## As a standalone CLI
 See the instructions on the releases page: https://github.com/mongodb/atlas-local-cli/releases/
