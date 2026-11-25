@@ -1,3 +1,16 @@
+## [0.11.4] - 2026-11-25
+
+### 🚀 Features
+
+- Read Docker Params from Env  ([#121](https://github.com/mongodb/atlas-local-cli/pull/121))
+
+### 🐛 Bug Fixes
+
+- *(deps)* Resolve RustSec advisories in CLI ([#124](https://github.com/mongodb/atlas-local-cli/pull/124))
+
+### ⚙️ Miscellaneous Tasks
+
+- Apix-action updates ([#122](https://github.com/mongodb/atlas-local-cli/pull/122))
 ## [0.11.3] - 2026-11-16
 
 ### 🐛 Bug Fixes
