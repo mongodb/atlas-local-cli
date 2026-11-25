@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use atlas_local::{
     Client, GetConnectionStringError, GetDeploymentError, GetLogsError,
+    bollard::models::HostConfig,
     client::{
         CreateDeploymentProgress, StartDeploymentError, StopDeploymentError,
         UnpauseDeploymentError, WatchDeploymentError,
@@ -147,6 +148,12 @@ pub trait DeploymentCreator {
         &self,
         deployment_options: CreateDeploymentOptions,
     ) -> CreateDeploymentProgress;
+
+    fn create_deployment_with_host_config(
+        &self,
+        deployment_options: CreateDeploymentOptions,
+        additional_host_config: HostConfig,
+    ) -> CreateDeploymentProgress;
 }
 
 impl DeploymentCreator for Client {
@@ -155,6 +162,14 @@ impl DeploymentCreator for Client {
         deployment_options: CreateDeploymentOptions,
     ) -> CreateDeploymentProgress {
         self.create_deployment(deployment_options)
+    }
+
+    fn create_deployment_with_host_config(
+        &self,
+        deployment_options: CreateDeploymentOptions,
+        additional_host_config: HostConfig,
+    ) -> CreateDeploymentProgress {
+        Client::create_deployment_with_host_config(self, deployment_options, additional_host_config)
     }
 }
 
@@ -225,6 +240,7 @@ pub mod mocks {
 
         impl DeploymentCreator for Docker {
             fn create_deployment(&self, deployment_options: CreateDeploymentOptions) -> CreateDeploymentProgress;
+            fn create_deployment_with_host_config(&self, deployment_options: CreateDeploymentOptions, additional_host_config: HostConfig) -> CreateDeploymentProgress;
         }
 
         #[async_trait]

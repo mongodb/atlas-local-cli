@@ -89,6 +89,14 @@ pub struct Start {
 /// Create a local deployment.
 ///
 /// To learn more about local atlas deployments, see https://www.mongodb.com/docs/atlas/cli/current/atlas-cli-deploy-local/
+///
+/// Set `MONGODB_ATLAS_LOCAL_DOCKER_PARAMS` to a JSON object of Docker `HostConfig`
+/// properties to pass additional options during container creation. For example:
+/// `MONGODB_ATLAS_LOCAL_DOCKER_PARAMS='{"Ulimits":[{"Name":"nofile","Soft":64000,"Hard":64000}]}' atlas local setup`.
+/// Atlas Local generates MongoDB `PortBindings` and seed-data `Binds` by default.
+/// Provided values replace those defaults. Omit a property or set it to `null` to
+/// retain its generated value.
+/// Other supported `HostConfig` fields are passed through.
 #[derive(Parser)]
 #[command(rename_all = "camelCase")]
 pub struct Setup {

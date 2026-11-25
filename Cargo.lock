@@ -105,9 +105,9 @@ dependencies = [
 
 [[package]]
 name = "atlas-local"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83f41bc04dd1098c513b3980fa899f3bf5d2af37a92b7c620ad524856170a792"
+checksum = "9250045e4e3385a6d559d25c4eced4629dd19afa44099f505c3eeaab11c63cfa"
 dependencies = [
  "bollard",
  "bytes",
@@ -130,7 +130,7 @@ version = "0.11.3"
 dependencies = [
  "anyhow",
  "async-trait",
- "atlas-local 0.10.0",
+ "atlas-local 0.10.1",
  "bytes",
  "clap",
  "console",

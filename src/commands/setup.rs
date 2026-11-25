@@ -4,6 +4,7 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use atlas_local::{
     Client, CreateDeploymentError,
+    bollard::models::HostConfig,
     client::CreateDeploymentStepOutcome,
     models::{BindingType, CreateDeploymentOptions, CreationSource, ImageTag, MongoDBPortBinding},
 };
@@ -66,6 +67,29 @@ fn bool_from_env(key: &str) -> Result<Option<bool>> {
         .map_err(|e| anyhow::anyhow!("invalid value for {}: {}", key, e))
 }
 
+fn parse_docker_params(params: Option<&str>) -> Result<Option<HostConfig>> {
+    let Some(params) = params.filter(|params| !params.trim().is_empty()) else {
+        return Ok(None);
+    };
+
+    serde_json::from_str(params).map(Some).with_context(|| {
+        format!(
+            "invalid value for {}: expected a JSON object matching Docker HostConfig",
+            env::MONGODB_ATLAS_LOCAL_DOCKER_PARAMS
+        )
+    })
+}
+
+fn docker_host_config_from_env() -> Result<Option<HostConfig>> {
+    let params = match std::env::var(env::MONGODB_ATLAS_LOCAL_DOCKER_PARAMS) {
+        Ok(params) => params,
+        Err(std::env::VarError::NotPresent) => return Ok(None),
+        Err(error) => return Err(error.into()),
+    };
+
+    parse_docker_params(Some(&params))
+}
+
 pub struct Setup {
     deployment_name: Option<String>,
     image_tag: Option<ImageTag>,
@@ -82,6 +106,7 @@ pub struct Setup {
     image: Option<String>,
     skip_pull_image: bool,
     connect_with: Option<ConnectWith>,
+    additional_host_config: Option<HostConfig>,
 
     interaction: Box<dyn SetupInteraction + Send>,
     deployment_management: Box<dyn SetupDeploymentManagement + Send>,
@@ -97,6 +122,7 @@ impl TryFrom<args::Setup> for Setup {
             image_tag: args.image_tag,
             use_preview: bool_from_env(env::MONGODB_ATLAS_LOCAL_PREVIEW)?,
             voyage_api_key: std::env::var(env::MONGODB_ATLAS_LOCAL_VOYAGE_API_KEY).ok(),
+            additional_host_config: docker_host_config_from_env()?,
             port: args.port,
             bind_ip_all: args.bind_ip_all,
             initdb: args.initdb,
@@ -265,9 +291,17 @@ impl CommandWithOutput for Setup {
             MultiStepSpinnerStep::new("Waiting for the deployment to be healthy..."),
         ])?;
 
-        let mut create_deployment_progress = self
-            .deployment_management
-            .create_deployment(create_deployment_options);
+        let mut create_deployment_progress = match self.additional_host_config.clone() {
+            Some(additional_host_config) => self
+                .deployment_management
+                .create_deployment_with_host_config(
+                    create_deployment_options,
+                    additional_host_config,
+                ),
+            None => self
+                .deployment_management
+                .create_deployment(create_deployment_options),
+        };
 
         let pull_image_outcome = create_deployment_progress
             .wait_for_pull_image_outcome()
@@ -686,6 +720,26 @@ mod tests {
     use semver::Version;
     use std::sync::Arc;
 
+    #[test]
+    fn parse_docker_params_unset_or_empty() {
+        assert!(parse_docker_params(None).unwrap().is_none());
+        assert!(parse_docker_params(Some("  ")).unwrap().is_none());
+    }
+
+    #[test]
+    fn parse_docker_params_host_config() {
+        let params = r#"{"Ulimits":[{"Name":"nofile","Soft":64000,"Hard":64000}]}"#;
+        let host_config = parse_docker_params(Some(params)).unwrap().unwrap();
+        assert!(host_config.ulimits.is_some());
+    }
+
+    #[test]
+    fn parse_docker_params_rejects_invalid_values() {
+        for params in ["not-json", "[]", "null"] {
+            assert!(parse_docker_params(Some(params)).is_err(), "{params}");
+        }
+    }
+
     mock! {
         pub Connector {}
 
@@ -862,6 +916,7 @@ mod tests {
             image: None,
             skip_pull_image: false,
             connect_with,
+            additional_host_config: None,
             interaction,
             deployment_management,
             connectors,
@@ -920,8 +975,9 @@ mod tests {
         let expected_name = deployment_name.clone();
         let expected_version = ImageTag::try_from("8.2.2").unwrap();
         mock_deployment_management
-            .expect_create_deployment()
-            .return_once(move |options| {
+            .expect_create_deployment_with_host_config()
+            .return_once(move |options, additional_host_config| {
+                assert_eq!(additional_host_config.memory, Some(1024));
                 assert_eq!(options.name, Some(expected_name));
                 assert_eq!(options.image_tag, Some(expected_version.clone()));
                 assert_eq!(options.creation_source, Some(CreationSource::AtlasLocal));
@@ -953,6 +1009,10 @@ mod tests {
             Box::new(mock_interaction),
             Box::new(mock_deployment_management),
         );
+        setup_command.additional_host_config = Some(HostConfig {
+            memory: Some(1024),
+            ..Default::default()
+        });
 
         let result = setup_command
             .execute()
