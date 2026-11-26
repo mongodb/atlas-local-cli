@@ -11,15 +11,17 @@ on:
 
 run-name: "Prepare release: ${{ inputs.version }}"
 
+# Keep in sync with the CI workflow and dependabot-post-update.sh.
+env:
+  CARGO_ABOUT_VERSION: 0.8.4
+
 permissions:
   contents: read
 
 jobs:
   update-version:
-    name: Update Version
+    name: Prepare Release
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.set-version.outputs.version }}
     steps:
       - name: Set Apix Bot token
         id: app-token
@@ -30,6 +32,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           token: ${{ steps.app-token.outputs.token }}
+          ref: main
           fetch-depth: 0
       - name: Validate version input
         env:
@@ -51,7 +54,9 @@ jobs:
       - name: Install cargo-edit to update Cargo.toml version
         run: cargo binstall --no-confirm --locked cargo-edit
       - name: Install cargo tools for license verification
-        run: cargo binstall --no-confirm --locked cargo-about
+        run: >-
+          cargo binstall --no-confirm --locked --version
+          ${{ env.CARGO_ABOUT_VERSION }} cargo-about
       - name: Update Cargo.toml version
         id: set-version
         env:
@@ -68,7 +73,7 @@ jobs:
           VERSION=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[0].version')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Update third-party licenses
-        run: cargo about generate about.hbs > LICENSE-3RD-PARTY.txt
+        run: cargo about generate --locked about.hbs > LICENSE-3RD-PARTY.txt
       - name: Generate changelog
         uses: orhun/git-cliff-action@v4
         with:
@@ -77,12 +82,36 @@ jobs:
         env:
           OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
-      - name: Commit version changes
-        run: |
-          git config --global user.name "${{ steps.app-token.outputs.user-name }}"
-          git config --global user.email "${{ steps.app-token.outputs.user-email }}"
-          git add Cargo.toml Cargo.lock CHANGELOG.md LICENSE-3RD-PARTY.txt
-          git commit -m "chore(release): prepare for ${{ steps.set-version.outputs.version }}"
-          git tag "v${{ steps.set-version.outputs.version }}"
-          git push
-          git push --tags
+      - name: Create release pull request
+        id: create-release-pr
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          committer: >-
+            ${{ steps.app-token.outputs.user-name }}
+            <${{ steps.app-token.outputs.user-email }}>
+          author: >-
+            ${{ steps.app-token.outputs.user-name }}
+            <${{ steps.app-token.outputs.user-email }}>
+          add-paths: |
+            Cargo.toml
+            Cargo.lock
+            CHANGELOG.md
+            LICENSE-3RD-PARTY.txt
+          title: >-
+            chore(release): prepare for ${{ steps.set-version.outputs.version }}
+          commit-message: >-
+            chore(release): prepare for ${{ steps.set-version.outputs.version }}
+          branch: "release/prepare-v${{ steps.set-version.outputs.version }}"
+          base: main
+          body: >-
+            Prepare the ${{ steps.set-version.outputs.version }} release.
+
+            Merging this PR triggers **Tag Release** to tag the merged commit
+            and start the release workflow.
+      - name: Request Jira ticket
+        if: steps.create-release-pr.outputs.pull-request-operation == 'created'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ steps.create-release-pr.outputs.pull-request-number }}
+        run: gh pr edit "$PR_NUMBER" --add-label create_jira
