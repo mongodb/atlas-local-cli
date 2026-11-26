@@ -48,6 +48,10 @@ cargo run --example [todo]
 
 ## Development
 
+### Releasing
+
+See [RELEASING.md](RELEASING.md) for the release process.
+
 ### Building
 
 ```bash
