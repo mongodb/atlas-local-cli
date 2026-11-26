@@ -76,6 +76,7 @@ jobs:
           rm -f "${FILE}.bak"
 
       - name: Create pull request
+        id: create-pr
         if: steps.parse-plan.outputs.skip != 'true'
         uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
@@ -93,3 +94,12 @@ jobs:
             Bump minimum required version of the Atlas Local plugin to `${{ steps.parse-plan.outputs.version }}`.
 
             Opened automatically after [Atlas Local plugin release ${{ steps.parse-plan.outputs.tag }}](https://github.com/mongodb/atlas-local-cli/releases/tag/${{ steps.parse-plan.outputs.tag }}).
+      - name: Enable auto-merge
+        if: steps.parse-plan.outputs.skip != 'true' && steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ steps.create-pr.outputs.pull-request-number }}
+        run: |
+          if [ "$(gh pr view "$PR_NUMBER" --json autoMergeRequest --jq '.autoMergeRequest != null')" != "true" ]; then
+            gh pr merge "$PR_NUMBER" --auto --squash
+          fi
